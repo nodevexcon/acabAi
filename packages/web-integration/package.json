@@ -1,14 +1,14 @@
 {
-  "name": "@midscene/web",
-  "description": "Automate browser actions, extract data, and perform assertions using AI. It offers JavaScript SDK, Chrome extension, and support for scripting in YAML. See https://midscenejs.com/ for details.",
-  "version": "0.15.3",
-  "repository": "https://github.com/web-infra-dev/midscene",
-  "homepage": "https://midscenejs.com/",
+  "name": "@acabai/web",
+  "description": "Web tarayıcı otomasyonu için AI destekli araçlar sunan bir JavaScript/TypeScript kütüphanesi.",
+  "version": "1.3.0",
+  "repository": "https://github.com/acabAI/web",
+  "homepage": "https://acabai.com/",
   "jsnext:source": "./src/index.ts",
   "main": "./dist/lib/index.js",
   "types": "./dist/types/index.d.ts",
   "bin": {
-    "midscene-playground": "./bin/midscene-playground"
+    "acabai-playground": "./bin/midscene-playground"
   },
   "exports": {
     ".": {
@@ -74,28 +74,58 @@
   },
   "typesVersions": {
     "*": {
-      ".": ["./dist/types/index.d.ts"],
-      "bridge-mode": ["./dist/types/bridge-mode.d.ts"],
-      "bridge-mode-browser": ["./dist/types/bridge-mode-browser.d.ts"],
-      "utils": ["./dist/types/utils.d.ts"],
-      "ui-utils": ["./dist/types/ui-utils.d.ts"],
-      "puppeteer": ["./dist/types/puppeteer.d.ts"],
+      ".": [
+        "./dist/types/index.d.ts"
+      ],
+      "bridge-mode": [
+        "./dist/types/bridge-mode.d.ts"
+      ],
+      "bridge-mode-browser": [
+        "./dist/types/bridge-mode-browser.d.ts"
+      ],
+      "utils": [
+        "./dist/types/utils.d.ts"
+      ],
+      "ui-utils": [
+        "./dist/types/ui-utils.d.ts"
+      ],
+      "puppeteer": [
+        "./dist/types/puppeteer.d.ts"
+      ],
       "puppeteer-agent-launcher": [
         "./dist/types/puppeteer-agent-launcher.d.ts"
       ],
-      "playwright": ["./dist/types/playwright.d.ts"],
-      "playwright-report": ["./dist/types/playwright-report.d.ts"],
-      "playground": ["./dist/types/playground.d.ts"],
-      "midscene-playground": ["./dist/types/midscene-playground.d.ts"],
-      "midscene-server": ["./dist/types/midscene-server.d.ts"],
-      "chrome-extension": ["./dist/types/chrome-extension.d.ts"],
-      "yaml": ["./dist/types/yaml.d.ts"],
-      "agent": ["./dist/types/agent.d.ts"]
+      "playwright": [
+        "./dist/types/playwright.d.ts"
+      ],
+      "playwright-report": [
+        "./dist/types/playwright-report.d.ts"
+      ],
+      "playground": [
+        "./dist/types/playground.d.ts"
+      ],
+      "midscene-playground": [
+        "./dist/types/midscene-playground.d.ts"
+      ],
+      "midscene-server": [
+        "./dist/types/midscene-server.d.ts"
+      ],
+      "chrome-extension": [
+        "./dist/types/chrome-extension.d.ts"
+      ],
+      "yaml": [
+        "./dist/types/yaml.d.ts"
+      ],
+      "agent": [
+        "./dist/types/agent.d.ts"
+      ]
     }
   },
   "watch": {
     "build": {
-      "patterns": ["src"],
+      "patterns": [
+        "src"
+      ],
       "extensions": "tsx,less,scss,css,js,jsx,ts",
       "quiet": false
     }
@@ -120,15 +150,22 @@
     "e2e:ui": "playwright test --config=tests/playwright.config.ts --ui",
     "e2e:ui:cache": "MIDSCENE_CACHE=true playwright test --config=tests/playwright.config.ts --ui"
   },
-  "files": ["static", "dist", "iife-script", "README.md", "bin"],
+  "files": [
+    "static",
+    "dist",
+    "iife-script",
+    "README.md",
+    "bin"
+  ],
   "dependencies": {
-    "@midscene/core": "workspace:*",
-    "@midscene/shared": "workspace:*",
+    "@midscene/core": "0.15.4",
+    "@midscene/shared": "0.15.4",
     "@xmldom/xmldom": "0.8.10",
     "cors": "2.8.5",
     "dayjs": "1.11.11",
     "devtools-protocol": "0.0.1380148",
     "dotenv": "16.4.5",
+    "encoding": "^0.1.13",
     "express": "^4.21.2",
     "fs-extra": "11.2.0",
     "http-server": "14.1.1",
@@ -165,6 +202,11 @@
     "puppeteer": {
       "optional": true
     }
+  },
+  "optionalDependencies": {
+    "puppeteer-extra": "^3.3.6",
+    "puppeteer-extra-plugin-adblocker": "^2.13.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2"
   },
   "engines": {
     "node": ">=18.0.0"

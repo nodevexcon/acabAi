@@ -257,9 +257,9 @@ export async function puppeteerAgentForTarget(
 ) {
   // Merge stealth and adblocker options from target and preference
   // Preference options take precedence over target options
-  const enableStealth = preference?.enableStealth ?? target.enableStealth ?? false;
-  const enableAdBlocker = preference?.enableAdBlocker ?? target.enableAdBlocker ?? false;
-  const adBlockerOptions = preference?.adBlockerOptions ?? target.adBlockerOptions;
+  const enableStealth = preference?.enableStealth ?? (target as any).enableStealth ?? false;
+  const enableAdBlocker = preference?.enableAdBlocker ?? (target as any).enableAdBlocker ?? false;
+  const adBlockerOptions = preference?.adBlockerOptions ?? (target as any).adBlockerOptions;
 
   // Launch page with merged options
   const { page, freeFn } = await launchPuppeteerPage(target, {
