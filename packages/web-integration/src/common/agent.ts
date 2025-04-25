@@ -44,16 +44,93 @@ import { type WebUIContext, parseContextFromWebPage } from './utils';
 
 const debug = getDebug('web-integration');
 
+/**
+ * Metadata about the AI task execution
+ */
+export interface AITaskMetadata {
+  /** Status of the task (pending, running, finished, failed, cancelled) */
+  status?: string;
+  /** Timestamp when the task started */
+  start?: number;
+  /** Timestamp when the task ended */
+  end?: number;
+  /** Total time taken to execute the task in milliseconds */
+  totalTime?: number;
+  /** Cache information */
+  cache?: { hit: boolean };
+  /** Token usage information */
+  usage?: {
+    prompt_tokens: number;
+    completion_tokens: number;
+    total_tokens: number;
+    [key: string]: any;
+  };
+  /** AI's thought process */
+  thought?: string;
+  /** Element location information */
+  locate?: any;
+  /** Action plans */
+  plan?: any;
+  /** Planning information */
+  planning?: {
+    type: string;
+    description: string;
+    steps: string[];
+  };
+  /** Insight information */
+  insight?: {
+    type: string;
+    description: string;
+    elements: string[];
+  };
+  /** Action information */
+  action?: {
+    type: string;
+    description: string;
+    result: any;
+  };
+  /** Action details */
+  actionDetails?: Array<{
+    type: string;
+    subType?: string;
+    status: string;
+    thought?: string;
+  }>;
+  /** Task details */
+  tasks?: Array<{
+    type: string;
+    subType?: string;
+    status: string;
+    thought?: string;
+    locate?: any;
+    timing?: any;
+    usage?: any;
+    cache?: any;
+    error?: string;
+  }>;
+}
+
+/**
+ * Result of an AI task with metadata
+ */
+export interface AITaskResult<T = any> {
+  /** The actual result of the operation */
+  result: T;
+  /** Metadata about the task execution */
+  metadata: AITaskMetadata;
+}
+
 export interface PageAgentOpt {
   forceSameTabNavigation?: boolean /* if limit the new tab to the current page, default true */;
   testId?: string;
   cacheId?: string;
+  cachePath?: string; /* custom path for cache files */
   groupName?: string;
   groupDescription?: string;
   cache?: AiTaskCache;
-  /* if auto generate report, default true */
+  /* if auto generate report, default false */
   generateReport?: boolean;
-  /* if auto print report msg, default true */
+  /* if auto print report msg, default false */
   autoPrintReportMsg?: boolean;
   onTaskStartTip?: OnTaskStartTip;
   aiActionContext?: string;
@@ -87,9 +164,9 @@ export class PageAgent<PageType extends WebPage = WebPage> {
     this.page = page;
     this.opts = Object.assign(
       {
-        generateReport: true,
-        autoPrintReportMsg: true,
-        groupName: 'Midscene Report',
+        generateReport: false,
+        autoPrintReportMsg: false,
+        groupName: 'Rafi Report',
         groupDescription: '',
       },
       opts || {},
@@ -153,8 +230,22 @@ export class PageAgent<PageType extends WebPage = WebPage> {
   }
 
   appendExecutionDump(execution: ExecutionDump) {
-    const currentDump = this.dump;
-    currentDump.executions.push(execution);
+    // For Puppeteer, we'll keep minimal data to avoid memory issues
+    if (this.page.pageType === 'puppeteer') {
+      // Only keep essential data for metadata extraction
+      const minimalExecution = {
+        ...execution,
+        // Remove large screenshot data if present
+        tasks: execution.tasks.map(task => ({
+          ...task,
+          recorder: undefined // Remove screenshots and other large data
+        }))
+      };
+      this.dump.executions.push(minimalExecution);
+    } else {
+      // For other page types, keep all data
+      this.dump.executions.push(execution);
+    }
   }
 
   dumpDataString() {
@@ -169,18 +260,22 @@ export class PageAgent<PageType extends WebPage = WebPage> {
   }
 
   writeOutActionDumps() {
-    const { generateReport, autoPrintReportMsg } = this.opts;
-    this.reportFile = writeLogFile({
-      fileName: this.reportFileName!,
-      fileExt: groupedActionDumpFileExt,
-      fileContent: this.dumpDataString(),
-      type: 'dump',
-      generateReport,
-    });
-    debug('writeOutActionDumps', this.reportFile);
-    if (generateReport && autoPrintReportMsg && this.reportFile) {
-      printReportMsg(this.reportFile);
+    // Deactivated report generation for Puppeteer
+    if (this.page.pageType !== 'puppeteer') {
+      const { generateReport, autoPrintReportMsg } = this.opts;
+      this.reportFile = writeLogFile({
+        fileName: this.reportFileName!,
+        fileExt: groupedActionDumpFileExt,
+        fileContent: this.dumpDataString(),
+        type: 'dump',
+        generateReport,
+      });
+      debug('writeOutActionDumps', this.reportFile);
+      if (generateReport && autoPrintReportMsg && this.reportFile) {
+        printReportMsg(this.reportFile);
+      }
     }
+    // For Puppeteer, we just skip report generation but keep the metadata
   }
 
   private async callbackOnTaskStartTip(task: ExecutionTask) {
@@ -192,13 +287,98 @@ export class PageAgent<PageType extends WebPage = WebPage> {
   }
 
   private afterTaskRunning(executor: Executor, doNotThrowError = false) {
+    // Always collect execution data for metadata
     this.appendExecutionDump(executor.dump());
+
+    // Only write out dumps if not using Puppeteer
     this.writeOutActionDumps();
 
     if (executor.isInErrorState() && !doNotThrowError) {
       const errorTask = executor.latestErrorTask();
-      throw new Error(`${errorTask?.error}\n${errorTask?.errorStack}`);
+      throw new Error(`${errorTask?.error}`);
     }
+
+    // Extract metadata from the executor
+    const lastTask = executor.tasks[executor.tasks.length - 1];
+
+    // Collect all tasks' thoughts and plans
+    const allThoughts = executor.tasks
+      .filter(task => task.thought)
+      .map(task => task.thought);
+
+    // Collect all locate information
+    const allLocates = executor.tasks
+      .filter(task => task.locate)
+      .map(task => task.locate);
+
+    // Collect all plans
+    const allPlans = executor.tasks
+      .filter(task => task.param?.plans)
+      .map(task => task.param?.plans);
+
+    // Collect tasks by type
+    const planningTasks = executor.tasks.filter(task => task.type === 'Planning');
+    const insightTasks = executor.tasks.filter(task => task.type === 'Insight');
+    const actionTasks = executor.tasks.filter(task => task.type === 'Action');
+
+    // Create planning, insight, and action information
+    const planning = planningTasks.length > 0 ? {
+      type: "Planning",
+      description: `Planning for task execution`,
+      steps: planningTasks.map(task => task.thought || 'Planning step')
+    } : undefined;
+
+    const insight = insightTasks.length > 0 ? {
+      type: "Insight",
+      description: `Insight for task execution`,
+      elements: insightTasks.map(task => task.thought || 'Insight element')
+    } : undefined;
+
+    const action = actionTasks.length > 0 ? {
+      type: "Action",
+      description: `Action for task execution`,
+      result: lastTask?.output
+    } : undefined;
+
+    // Create action details
+    const actionDetails = executor.tasks.map(task => ({
+      type: task.type,
+      subType: task.subType,
+      status: task.status,
+      thought: task.thought
+    }));
+
+    // Extract detailed information from all tasks
+    const metadata = {
+      status: lastTask?.status,
+      start: lastTask?.timing?.start,
+      end: lastTask?.timing?.end,
+      totalTime: lastTask?.timing?.cost,
+      cache: lastTask?.cache,
+      usage: lastTask?.usage,
+      thought: allThoughts.length > 0 ? allThoughts.join('\n') : lastTask?.thought,
+      locate: allLocates.length > 0 ? allLocates : lastTask?.locate,
+      plan: allPlans.length > 0 ? allPlans : lastTask?.param?.plans,
+      // Add planning, insight, and action information
+      planning,
+      insight,
+      action,
+      actionDetails,
+      // Include raw tasks for debugging
+      tasks: executor.tasks.map(task => ({
+        type: task.type,
+        subType: task.subType,
+        status: task.status,
+        thought: task.thought,
+        locate: task.locate,
+        timing: task.timing,
+        usage: task.usage,
+        cache: task.cache,
+        error: task.error
+      }))
+    };
+
+    return metadata;
   }
 
   private buildDetailedLocateParam(locatePrompt: string, opt?: LocateOption) {
@@ -214,7 +394,7 @@ export class PageAgent<PageType extends WebPage = WebPage> {
     };
   }
 
-  async aiTap(locatePrompt: string, opt?: LocateOption) {
+  async aiTap(locatePrompt: string, opt?: LocateOption): Promise<AITaskResult> {
     const detailedLocateParam = this.buildDetailedLocateParam(
       locatePrompt,
       opt,
@@ -224,11 +404,14 @@ export class PageAgent<PageType extends WebPage = WebPage> {
       taskTitleStr('Tap', locateParamStr(detailedLocateParam)),
       plans,
     );
-    this.afterTaskRunning(executor);
-    return output;
+    const metadata = this.afterTaskRunning(executor);
+    return {
+      result: output,
+      metadata
+    };
   }
 
-  async aiHover(locatePrompt: string, opt?: LocateOption) {
+  async aiHover(locatePrompt: string, opt?: LocateOption): Promise<AITaskResult> {
     const detailedLocateParam = this.buildDetailedLocateParam(
       locatePrompt,
       opt,
@@ -238,11 +421,14 @@ export class PageAgent<PageType extends WebPage = WebPage> {
       taskTitleStr('Hover', locateParamStr(detailedLocateParam)),
       plans,
     );
-    this.afterTaskRunning(executor);
-    return output;
+    const metadata = this.afterTaskRunning(executor);
+    return {
+      result: output,
+      metadata
+    };
   }
 
-  async aiInput(value: string, locatePrompt: string, opt?: LocateOption) {
+  async aiInput(value: string, locatePrompt: string, opt?: LocateOption): Promise<AITaskResult> {
     assert(
       typeof value === 'string',
       'input value must be a string, use empty string if you want to clear the input',
@@ -259,15 +445,18 @@ export class PageAgent<PageType extends WebPage = WebPage> {
       taskTitleStr('Input', locateParamStr(detailedLocateParam)),
       plans,
     );
-    this.afterTaskRunning(executor);
-    return output;
+    const metadata = this.afterTaskRunning(executor);
+    return {
+      result: output,
+      metadata
+    };
   }
 
   async aiKeyboardPress(
     keyName: string,
     locatePrompt?: string,
     opt?: LocateOption,
-  ) {
+  ): Promise<AITaskResult> {
     assert(keyName, 'missing keyName for keyboard press');
     const detailedLocateParam = locatePrompt
       ? this.buildDetailedLocateParam(locatePrompt, opt)
@@ -279,15 +468,18 @@ export class PageAgent<PageType extends WebPage = WebPage> {
       taskTitleStr('KeyboardPress', locateParamStr(detailedLocateParam)),
       plans,
     );
-    this.afterTaskRunning(executor);
-    return output;
+    const metadata = this.afterTaskRunning(executor);
+    return {
+      result: output,
+      metadata
+    };
   }
 
   async aiScroll(
     scrollParam: PlanningActionParamScroll,
     locatePrompt?: string,
     opt?: LocateOption,
-  ) {
+  ): Promise<AITaskResult> {
     const detailedLocateParam = locatePrompt
       ? this.buildDetailedLocateParam(locatePrompt, opt)
       : undefined;
@@ -299,31 +491,43 @@ export class PageAgent<PageType extends WebPage = WebPage> {
       taskTitleStr('Scroll', paramInTitle),
       plans,
     );
-    this.afterTaskRunning(executor);
-    return output;
+    const metadata = this.afterTaskRunning(executor);
+    return {
+      result: output,
+      metadata
+    };
   }
 
-  async aiAction(taskPrompt: string) {
+  async aiAction(taskPrompt: string): Promise<AITaskResult> {
     const { output, executor } = await (vlLocateMode() === 'vlm-ui-tars'
       ? this.taskExecutor.actionToGoal(taskPrompt)
       : this.taskExecutor.action(taskPrompt, this.opts.aiActionContext));
 
-    this.afterTaskRunning(executor);
-    return output;
+    const metadata = this.afterTaskRunning(executor);
+    return {
+      result: output,
+      metadata
+    };
   }
 
-  async aiQuery(demand: any) {
+  async aiQuery(demand: any): Promise<AITaskResult> {
     const { output, executor } = await this.taskExecutor.query(demand);
-    this.afterTaskRunning(executor);
-    return output;
+    const metadata = this.afterTaskRunning(executor);
+    return {
+      result: output,
+      metadata
+    };
   }
 
-  async aiAssert(assertion: string, msg?: string, opt?: AgentAssertOpt) {
+  async aiAssert(assertion: string, msg?: string, opt?: AgentAssertOpt): Promise<AITaskResult> {
     const { output, executor } = await this.taskExecutor.assert(assertion);
-    this.afterTaskRunning(executor, true);
+    const metadata = this.afterTaskRunning(executor, true);
 
     if (output && opt?.keepRawResponse) {
-      return output;
+      return {
+        result: output,
+        metadata
+      };
     }
 
     if (!output?.pass) {
@@ -333,24 +537,30 @@ export class PageAgent<PageType extends WebPage = WebPage> {
       }`;
       throw new Error(`${errMsg}\n${reasonMsg}`);
     }
+
+    return {
+      result: output,
+      metadata
+    };
   }
 
-  async aiWaitFor(assertion: string, opt?: AgentWaitForOpt) {
+  async aiWaitFor(assertion: string, opt?: AgentWaitForOpt): Promise<AITaskResult> {
     const { executor } = await this.taskExecutor.waitFor(assertion, {
       timeoutMs: opt?.timeoutMs || 15 * 1000,
       checkIntervalMs: opt?.checkIntervalMs || 3 * 1000,
       assertion,
     });
-    this.appendExecutionDump(executor.dump());
-    this.writeOutActionDumps();
 
-    if (executor.isInErrorState()) {
-      const errorTask = executor.latestErrorTask();
-      throw new Error(`${errorTask?.error}\n${errorTask?.errorStack}`);
-    }
+    // Use the common afterTaskRunning method to extract metadata
+    const metadata = this.afterTaskRunning(executor, true);
+
+    return {
+      result: true,
+      metadata
+    };
   }
 
-  async ai(taskPrompt: string, type = 'action') {
+  async ai(taskPrompt: string, type = 'action'): Promise<AITaskResult> {
     if (type === 'action') {
       return this.aiAction(taskPrompt);
     }
@@ -375,7 +585,7 @@ export class PageAgent<PageType extends WebPage = WebPage> {
     result: Record<string, any>;
   }> {
     const script = parseYamlScript(yamlScriptContent, 'yaml', true);
-    const player = new ScriptPlayer(script, async (target) => {
+    const player = new ScriptPlayer(script, async (_target) => {
       return { agent: this, freeFn: [] };
     });
     await player.run();
@@ -395,12 +605,13 @@ export class PageAgent<PageType extends WebPage = WebPage> {
     };
   }
 
-  async evaluateJavaScript(script: string) {
+  async evaluateJavaScript<T = any>(script: string): Promise<T> {
     assert(
-      this.page.evaluateJavaScript,
+      typeof this.page.evaluateJavaScript === 'function',
       'evaluateJavaScript is not supported in current agent',
     );
-    return this.page.evaluateJavaScript(script);
+    // Type assertion to ensure TypeScript knows the function exists
+    return (this.page.evaluateJavaScript as (script: string) => Promise<T>)(script);
   }
 
   async destroy() {

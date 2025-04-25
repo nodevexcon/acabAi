@@ -51,6 +51,14 @@ export interface MidsceneYamlScriptWebEnv extends MidsceneYamlScriptEnvBase {
   cookie?: string;
   forceSameTabNavigation?: boolean; // if track the newly opened tab, true for default in yaml script
 
+  // puppeteer-extra plugins
+  enableStealth?: boolean; // Enable puppeteer-stealth plugin to avoid detection
+  enableAdBlocker?: boolean; // Enable adblocker plugin to block ads
+  adBlockerOptions?: {
+    path?: string; // Path to custom adblock rules file
+    blockTrackers?: boolean; // Block trackers in addition to ads, default true
+  };
+
   // bridge mode config
   bridgeMode?: false | 'newTabWithUrl' | 'currentTab';
   closeNewTabsAfterDisconnect?: boolean;

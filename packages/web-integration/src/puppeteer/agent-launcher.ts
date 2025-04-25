@@ -2,10 +2,28 @@ import { readFileSync } from 'node:fs';
 import { getDebug } from '@midscene/shared/logger';
 import { assert } from '@midscene/shared/utils';
 
-import { PuppeteerAgent } from '@/puppeteer/index';
+import { PuppeteerAgent, type PuppeteerAgentOptions } from '@/puppeteer/index';
 import type { MidsceneYamlScriptWebEnv } from '@midscene/core';
 import { DEFAULT_WAIT_FOR_NETWORK_IDLE_TIMEOUT } from '@midscene/shared/constants';
+
+// Import standard puppeteer as a fallback
 import puppeteer from 'puppeteer';
+
+// Import puppeteer-extra and plugins
+// Note: These imports are using dynamic imports to avoid breaking if packages are not installed
+let puppeteerExtra: any = null;
+let StealthPlugin: any = null;
+let AdblockerPlugin: any = null;
+
+// Try to load puppeteer-extra and plugins
+try {
+  // Using require instead of import for conditional loading
+  puppeteerExtra = require('puppeteer-extra');
+  StealthPlugin = require('puppeteer-extra-plugin-stealth');
+  AdblockerPlugin = require('puppeteer-extra-plugin-adblocker');
+} catch (error) {
+  console.warn('puppeteer-extra or plugins not found, using standard puppeteer');
+}
 
 export const defaultUA =
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36';
@@ -27,6 +45,12 @@ export async function launchPuppeteerPage(
   preference?: {
     headed?: boolean;
     keepWindow?: boolean;
+    enableStealth?: boolean;
+    enableAdBlocker?: boolean;
+    adBlockerOptions?: {
+      path?: string;
+      blockTrackers?: boolean;
+    };
   },
 ) {
   assert(target.url, 'url is required');
@@ -105,12 +129,62 @@ export async function launchPuppeteerPage(
     args,
     preference,
   );
-  const browser = await puppeteer.launch({
+
+  // Launch options for puppeteer
+  const launchOptions = {
     headless: !headed,
     defaultViewport: viewportConfig,
     args,
     acceptInsecureCerts: target.acceptInsecureCerts,
-  });
+  };
+
+  let browser;
+
+  // Check if puppeteer-extra is available and if stealth or adblocker is enabled
+  if (puppeteerExtra && (preference?.enableStealth || preference?.enableAdBlocker)) {
+    launcherDebug('Using puppeteer-extra with plugins');
+
+    // Add stealth plugin if enabled
+    if (preference?.enableStealth && StealthPlugin) {
+      launcherDebug('Adding stealth plugin');
+      puppeteerExtra.use(StealthPlugin());
+    }
+
+    // Add adblocker plugin if enabled
+    if (preference?.enableAdBlocker && AdblockerPlugin) {
+      const adBlockerOptions = preference.adBlockerOptions || {};
+      const blockTrackers = adBlockerOptions.blockTrackers !== false; // Default to true
+
+      launcherDebug('Adding adblocker plugin with options:', {
+        blockTrackers,
+        path: adBlockerOptions.path
+      });
+
+      const adblockerPlugin = AdblockerPlugin({
+        blockTrackers,
+      });
+
+      // Load custom rules if provided
+      if (adBlockerOptions.path) {
+        try {
+          const customRules = readFileSync(adBlockerOptions.path, 'utf-8');
+          adblockerPlugin.setRules(customRules);
+        } catch (error) {
+          console.warn(`Failed to load custom adblock rules from ${adBlockerOptions.path}:`, error);
+        }
+      }
+
+      puppeteerExtra.use(adblockerPlugin);
+    }
+
+    // Launch browser with puppeteer-extra
+    browser = await puppeteerExtra.launch(launchOptions);
+  } else {
+    // Fall back to standard puppeteer if plugins are not available or not enabled
+    launcherDebug('Using standard puppeteer');
+    browser = await puppeteer.launch(launchOptions);
+  }
+
   freeFn.push({
     name: 'puppeteer_browser',
     fn: () => {
@@ -173,11 +247,29 @@ export async function puppeteerAgentForTarget(
     keepWindow?: boolean;
     testId?: string;
     cacheId?: string;
+    enableStealth?: boolean;
+    enableAdBlocker?: boolean;
+    adBlockerOptions?: {
+      path?: string;
+      blockTrackers?: boolean;
+    };
   },
 ) {
-  const { page, freeFn } = await launchPuppeteerPage(target, preference);
+  // Merge stealth and adblocker options from target and preference
+  // Preference options take precedence over target options
+  const enableStealth = preference?.enableStealth ?? target.enableStealth ?? false;
+  const enableAdBlocker = preference?.enableAdBlocker ?? target.enableAdBlocker ?? false;
+  const adBlockerOptions = preference?.adBlockerOptions ?? target.adBlockerOptions;
 
-  // prepare Midscene agent
+  // Launch page with merged options
+  const { page, freeFn } = await launchPuppeteerPage(target, {
+    ...preference,
+    enableStealth,
+    enableAdBlocker,
+    adBlockerOptions,
+  });
+
+  // prepare Puppeteer agent with extended options
   const agent = new PuppeteerAgent(page, {
     autoPrintReportMsg: false,
     testId: preference?.testId,
@@ -187,6 +279,10 @@ export async function puppeteerAgentForTarget(
       typeof target.forceSameTabNavigation !== 'undefined'
         ? target.forceSameTabNavigation
         : true, // true for default in yaml script
+    // Pass stealth and adblocker options
+    enableStealth,
+    enableAdBlocker,
+    adBlockerOptions,
   });
 
   freeFn.push({
