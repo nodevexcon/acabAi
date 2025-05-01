@@ -123,10 +123,13 @@ export async function launchPuppeteerPage(
   ];
 
   launcherDebug(
-    'launching browser with viewport, headed: %s, viewport: %j, args: %j, preference: %j',
+    'launching browser with viewport, headed',
     headed,
+    'viewport',
     viewportConfig,
+    'args',
     args,
+    'preference',
     preference,
   );
 

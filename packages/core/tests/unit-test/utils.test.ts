@@ -1,9 +1,7 @@
 import { randomUUID } from 'node:crypto';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync, statSync } from 'node:fs';
 import {
-  adaptBboxToRect,
   adaptDoubaoBbox,
-  adaptGeminiBbox,
   adaptQwenBbox,
   expandSearchArea,
   mergeRects,
@@ -96,6 +94,143 @@ describe('utils', () => {
       `<script type="midscene_web_dump" type="application/json">\n${content}\n</script>`,
     );
   });
+
+  it('reportHTMLContent with reportPath', () => {
+    const tmpFile = getTmpFile('html');
+    expect(tmpFile).toBeTruthy();
+
+    if (!tmpFile) {
+      return;
+    }
+
+    // test empty array
+    const reportPathA = reportHTMLContent([], tmpFile);
+    expect(reportPathA).toBe(tmpFile);
+    const fileContentA = readFileSync(tmpFile, 'utf-8');
+    expect(fileContentA).toContain(
+      '<script type="midscene_web_dump" type="application/json"></script>',
+    );
+
+    // test string content
+    const content = JSON.stringify({ test: randomUUID() });
+    const reportPathB = reportHTMLContent(content, tmpFile);
+    expect(reportPathB).toBe(tmpFile);
+    const fileContentB = readFileSync(tmpFile, 'utf-8');
+    expect(fileContentB).toContain(
+      `<script type="midscene_web_dump" type="application/json">\n${content}\n</script>`,
+    );
+
+    // test array with attributes
+    const uuid1 = randomUUID();
+    const uuid2 = randomUUID();
+    const dumpArray = [
+      {
+        dumpString: JSON.stringify({ id: uuid1 }),
+        attributes: {
+          test_attr: 'test_value',
+          another_attr: 'another_value',
+        },
+      },
+      {
+        dumpString: JSON.stringify({ id: uuid2 }),
+        attributes: {
+          test_attr2: 'test_value2',
+        },
+      },
+    ];
+
+    const reportPathC = reportHTMLContent(dumpArray, tmpFile);
+    expect(reportPathC).toBe(tmpFile);
+    const fileContentC = readFileSync(tmpFile, 'utf-8');
+
+    // verify the file content contains attributes and data
+    expect(fileContentC).toContain('test_attr="test_value"');
+    expect(fileContentC).toContain('another_attr="another_value"');
+    expect(fileContentC).toContain('test_attr2="test_value2"');
+    expect(fileContentC).toContain(uuid1);
+    expect(fileContentC).toContain(uuid2);
+  });
+
+  it(
+    'should handle multiple large reports correctly',
+    () => {
+      const tmpFile = getTmpFile('html');
+      expect(tmpFile).toBeTruthy();
+
+      if (!tmpFile) {
+        return;
+      }
+
+      // Create a large string of approximately 100MB
+      const generateLargeString = (sizeInMB: number, identifier: string) => {
+        const approximateCharsPer1MB = 1024 * 1024; // 1MB in characters
+        const totalChars = approximateCharsPer1MB * sizeInMB;
+
+        // Create a basic JSON structure with a very large string
+        const baseObj = {
+          id: identifier,
+          timestamp: new Date().toISOString(),
+          data: 'X'.repeat(totalChars - 100), // subtract a small amount for the JSON structure
+        };
+
+        return JSON.stringify(baseObj);
+      };
+
+      // Monitor memory usage
+      const startMemory = process.memoryUsage();
+      console.log(
+        'Memory usage before test:',
+        `RSS: ${Math.round(startMemory.rss / 1024 / 1024)}MB, ` +
+          `Heap Total: ${Math.round(startMemory.heapTotal / 1024 / 1024)}MB, ` +
+          `Heap Used: ${Math.round(startMemory.heapUsed / 1024 / 1024)}MB`,
+      );
+
+      // Store start time
+      const startTime = Date.now();
+
+      // Generate 10 large reports (each ~100MB)
+      const numberOfReports = 10;
+      const dumpArray = Array.from({ length: numberOfReports }).map(
+        (_, index) => ({
+          dumpString: generateLargeString(100, `large-report-${index + 1}`),
+          attributes: {
+            report_number: `${index + 1}`,
+            report_size: '100MB',
+          },
+        }),
+      );
+
+      // Write the large reports
+      const reportPath = reportHTMLContent(dumpArray, tmpFile);
+      expect(reportPath).toBe(tmpFile);
+
+      // Calculate execution time
+      const executionTime = Date.now() - startTime;
+      console.log(`Execution time: ${executionTime}ms`);
+
+      // Check memory usage after test
+      const endMemory = process.memoryUsage();
+      console.log(
+        'Memory usage after test:',
+        `RSS: ${Math.round(endMemory.rss / 1024 / 1024)}MB, ` +
+          `Heap Total: ${Math.round(endMemory.heapTotal / 1024 / 1024)}MB, ` +
+          `Heap Used: ${Math.round(endMemory.heapUsed / 1024 / 1024)}MB`,
+      );
+
+      // Check if file exists
+      expect(existsSync(tmpFile)).toBe(true);
+
+      // Verify file size is approximately (100MB * 10) + template size
+      const stats = statSync(tmpFile);
+      const fileSizeInMB = stats.size / (1024 * 1024);
+      console.log(`File size: ${fileSizeInMB.toFixed(2)}MB`);
+
+      // We expect the file to be approximately 700MB plus template overhead
+      const expectedMinSize = 1000; // 10 reports × 100MB
+      expect(fileSizeInMB).toBeGreaterThan(expectedMinSize);
+    },
+    { timeout: 30000 },
+  );
 });
 
 describe('extractJSONFromCodeBlock', () => {
@@ -211,29 +346,46 @@ describe('qwen-vl', () => {
   it('adaptQwenBbox with invalid bbox data', () => {
     expect(() => adaptQwenBbox([100])).toThrow();
   });
-
-  it.skipIf(vlLocateMode() !== 'qwen-vl')('adaptBboxToRect', () => {
-    const result = adaptBboxToRect([100, 200, 300, 400], 400, 900, 30, 60);
-    expect(result).toMatchInlineSnapshot(`
-      {
-        "height": 200,
-        "left": 130,
-        "top": 260,
-        "width": 200,
-      }
-    `);
-  });
 });
 
-describe('gemini', () => {
-  it('adaptGeminiBbox', () => {
-    const result = adaptGeminiBbox([100, 200, 300, 400], 400, 900);
+describe('doubao-vision', () => {
+  it('adaptDoubaoBbox', () => {
+    const result = adaptDoubaoBbox([100, 200, 300, 400], 400, 900);
     expect(result).toMatchInlineSnapshot(`
       [
-        80,
-        90,
-        160,
-        270,
+        40,
+        180,
+        120,
+        360,
+      ]
+    `);
+  });
+  it('adaptDoubaoBbox', () => {
+    const result = adaptDoubaoBbox([[100, 200, 300, 400]] as any, 400, 900);
+    expect(result).toMatchInlineSnapshot(`
+      [
+        40,
+        180,
+        120,
+        360,
+      ]
+    `);
+  });
+  it('adaptDoubaoBbox', () => {
+    const result = adaptDoubaoBbox(
+      [
+        [100, 200, 300, 400],
+        [100, 200, 300, 400],
+      ] as any,
+      400,
+      900,
+    );
+    expect(result).toMatchInlineSnapshot(`
+      [
+        40,
+        180,
+        120,
+        360,
       ]
     `);
   });

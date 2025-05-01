@@ -56,7 +56,7 @@ const defaultBboxSize = 20; // must be even number
 const debugInspectUtils = getDebug('ai:common');
 
 // transform the param of locate from qwen mode
-export function fillLocateParam(
+export function fillBboxParam(
   locate: PlanningLocateParam,
   width: number,
   height: number,
@@ -121,6 +121,10 @@ export function adaptDoubaoBbox(
       ];
     }
     throw new Error(`invalid bbox data string for doubao-vision mode: ${bbox}`);
+  }
+
+  if (Array.isArray(bbox) && Array.isArray(bbox[0])) {
+    bbox = bbox[0];
   }
 
   if (bbox.length === 4 || bbox.length === 5) {
@@ -203,12 +207,14 @@ export function adaptBboxToRect(
 ): Rect {
   debugInspectUtils('adaptBboxToRect', bbox, width, height, offsetX, offsetY);
   const [left, top, right, bottom] = adaptBbox(bbox, width, height);
-  return {
+  const rect = {
     left: left + offsetX,
     top: top + offsetY,
     width: right - left,
     height: bottom - top,
   };
+  debugInspectUtils('adaptBboxToRect, result=', rect);
+  return rect;
 }
 
 let warned = false;

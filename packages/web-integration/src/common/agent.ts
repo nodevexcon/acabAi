@@ -9,6 +9,7 @@ import {
   Insight,
   type InsightAction,
   type LocateOption,
+  type LocateResultElement,
   type OnTaskStartTip,
   type PlanningActionParamScroll,
 } from '@midscene/core';
@@ -515,6 +516,53 @@ export class PageAgent<PageType extends WebPage = WebPage> {
     const metadata = this.afterTaskRunning(executor);
     return {
       result: output,
+      metadata
+    };
+  }
+
+  async aiBoolean(prompt: string): Promise<AITaskResult> {
+    const { output, executor } = await this.taskExecutor.boolean(prompt);
+    const metadata = this.afterTaskRunning(executor);
+    return {
+      result: output,
+      metadata
+    };
+  }
+
+  async aiNumber(prompt: string): Promise<AITaskResult> {
+    const { output, executor } = await this.taskExecutor.number(prompt);
+    const metadata = this.afterTaskRunning(executor);
+    return {
+      result: output,
+      metadata
+    };
+  }
+
+  async aiString(prompt: string): Promise<AITaskResult> {
+    const { output, executor } = await this.taskExecutor.string(prompt);
+    const metadata = this.afterTaskRunning(executor);
+    return {
+      result: output,
+      metadata
+    };
+  }
+
+  async aiLocate(prompt: string, opt?: LocateOption): Promise<AITaskResult> {
+    const detailedLocateParam = this.buildDetailedLocateParam(prompt, opt);
+    const plans = buildPlans('Locate', detailedLocateParam);
+    const { executor, output } = await this.taskExecutor.runPlans(
+      taskTitleStr('Locate', locateParamStr(detailedLocateParam)),
+      plans,
+    );
+    const metadata = this.afterTaskRunning(executor);
+
+    const { element } = output;
+
+    return {
+      result: {
+        rect: element?.rect,
+        center: element?.center,
+      } as Pick<LocateResultElement, 'rect' | 'center'>,
       metadata
     };
   }

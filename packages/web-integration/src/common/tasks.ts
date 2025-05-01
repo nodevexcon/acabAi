@@ -33,7 +33,13 @@ import {
   vlmPlanning,
 } from '@midscene/core/ai-model';
 import { sleep } from '@midscene/core/utils';
+
+import { UITarsModelVersion } from '@midscene/shared/env';
+import { uiTarsModelVersion } from '@midscene/shared/env';
+import { vlLocateMode } from '@midscene/shared/env';
 import type { ElementInfo } from '@midscene/shared/extractor';
+import { imageInfo, resizeImgBase64 } from '@midscene/shared/img';
+import { getDebug } from '@midscene/shared/logger';
 import { assert } from '@midscene/shared/utils';
 import type { WebElementInfo } from '../web-element';
 import { TaskCache } from './task-cache';
@@ -44,6 +50,8 @@ interface ExecutionResult<OutputType = any> {
   output: OutputType;
   executor: Executor;
 }
+
+const debug = getDebug('page-task-executor');
 
 const replanningCountLimit = 10;
 
@@ -736,13 +744,43 @@ export class PageTaskExecutor {
         };
         executorContext.task.recorder = [recordItem];
         (executorContext.task as any).pageContext = pageContext;
+
+        let imagePayload = pageContext.screenshotBase64;
+        if (
+          vlLocateMode() === 'vlm-ui-tars' &&
+          uiTarsModelVersion() === UITarsModelVersion.V1_5
+        ) {
+          const size = pageContext.size;
+          // const imageInfo = await imageInfoOfBase64(imagePayload);
+          debug('ui-tars-v1.5, will check image size', size);
+          const currentPixels = size.width * size.height;
+          const maxPixels = 16384 * 28 * 28; //
+          if (currentPixels > maxPixels) {
+            const resizeFactor = Math.sqrt(maxPixels / currentPixels);
+            const newWidth = Math.floor(size.width * resizeFactor);
+            const newHeight = Math.floor(size.height * resizeFactor);
+            debug(
+              'resize image',
+              imageInfo,
+              'new width',
+              newWidth,
+              'new height',
+              newHeight,
+            );
+            imagePayload = await resizeImgBase64(imagePayload, {
+              width: newWidth,
+              height: newHeight,
+            });
+          }
+        }
+
         this.appendConversationHistory({
           role: 'user',
           content: [
             {
               type: 'image_url',
               image_url: {
-                url: pageContext.screenshotBase64,
+                url: imagePayload,
               },
             },
           ],
@@ -786,6 +824,9 @@ export class PageTaskExecutor {
             actionType: actions[0].type,
             more_actions_needed_by_instruction: true,
             log: '',
+          },
+          log: {
+            rawResponse: planResult,
           },
           cache: {
             hit: Boolean(planCache),
@@ -954,18 +995,26 @@ export class PageTaskExecutor {
     };
   }
 
-  async query(demand: InsightExtractParam): Promise<ExecutionResult> {
-    const description =
-      typeof demand === 'string' ? demand : JSON.stringify(demand);
-    const taskExecutor = new Executor(taskTitleStr('Query', description), {
-      onTaskStart: this.onTaskStartCallback,
-    });
+  private async createTypeQueryTask<T>(
+    type: 'Query' | 'Boolean' | 'Number' | 'String',
+    demand: InsightExtractParam,
+  ): Promise<ExecutionResult<T>> {
+    const taskExecutor = new Executor(
+      taskTitleStr(
+        type,
+        typeof demand === 'string' ? demand : JSON.stringify(demand),
+      ),
+      {
+        onTaskStart: this.onTaskStartCallback,
+      },
+    );
+
     const queryTask: ExecutionTaskInsightQueryApply = {
       type: 'Insight',
-      subType: 'Query',
+      subType: type,
       locate: null,
       param: {
-        dataDemand: demand,
+        dataDemand: demand, // for user param presentation in report right sidebar
       },
       executor: async (param) => {
         let insightDump: InsightDump | undefined;
@@ -973,11 +1022,25 @@ export class PageTaskExecutor {
           insightDump = dump;
         };
         this.insight.onceDumpUpdatedFn = dumpCollector;
-        const { data, usage } = await this.insight.extract<any>(
-          param.dataDemand,
-        );
+
+        const ifTypeRestricted = type !== 'Query';
+        let demandInput = demand;
+        if (ifTypeRestricted) {
+          demandInput = {
+            result: `${type}, ${demand}`,
+          };
+        }
+
+        const { data, usage } = await this.insight.extract<any>(demandInput);
+
+        let outputResult = data;
+        if (ifTypeRestricted) {
+          assert(data?.result !== undefined, 'No result in query data');
+          outputResult = (data as any).result;
+        }
+
         return {
-          output: data,
+          output: outputResult,
           log: { dump: insightDump },
           usage,
         };
@@ -990,6 +1053,22 @@ export class PageTaskExecutor {
       output,
       executor: taskExecutor,
     };
+  }
+
+  async query(demand: InsightExtractParam): Promise<ExecutionResult> {
+    return this.createTypeQueryTask('Query', demand);
+  }
+
+  async boolean(prompt: string): Promise<ExecutionResult<boolean>> {
+    return this.createTypeQueryTask<boolean>('Boolean', prompt);
+  }
+
+  async number(prompt: string): Promise<ExecutionResult<number>> {
+    return this.createTypeQueryTask<number>('Number', prompt);
+  }
+
+  async string(prompt: string): Promise<ExecutionResult<string>> {
+    return this.createTypeQueryTask<string>('String', prompt);
   }
 
   async assert(

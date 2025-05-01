@@ -249,11 +249,80 @@ const dataB = await agent.aiQuery('string[]，列表中的任务名称');
 const dataC = await agent.aiQuery('{name: string, age: string}[], 表格中的数据记录');
 ```
 
+此外，我们还提供了 `aiBoolean()`, `aiNumber()`, `aiString()` 三个便捷方法，用于直接提取布尔值、数字和字符串。
+
+
+### `agent.aiBoolean()`
+
+从 UI 中提取一个布尔值。
+
+* 类型
+
+```typescript
+function aiBoolean(prompt: string): Promise<boolean>;
+```
+
+* 参数：
+  * `prompt: string` - 用自然语言描述的期望值。
+
+* 返回值：
+  * 返回一个 Promise。当 AI 返回结果时解析为布尔值。
+
+* 示例：
+
+```typescript
+const bool = await agent.aiBoolean('是否存在登录对话框');
+```
+
+### `agent.aiNumber()`
+
+从 UI 中提取一个数字。
+
+* 类型
+
+```typescript
+function aiNumber(prompt: string): Promise<number>;
+```
+
+* 参数：
+  * `prompt: string` - 用自然语言描述的期望值。
+
+* 返回值：
+  * 返回一个 Promise。当 AI 返回结果时解析为数字。
+
+* 示例：
+
+```typescript
+const number = await agent.aiNumber('账户剩余的积分');
+```
+
+### `agent.aiString()`
+
+从 UI 中提取一个字符串。
+
+* 类型
+
+```typescript
+function aiString(prompt: string): Promise<string>;
+```
+
+* 参数：
+  * `prompt: string` - 用自然语言描述的期望值。
+
+* 返回值：
+  * 返回一个 Promise。当 AI 返回结果时解析为字符串。
+
+* 示例：
+
+```typescript
+const string = await agent.aiString('当前列表的第一条记录的名称');
+```
+
 ## 更多方法
 
 ### `agent.aiAssert()`
 
-使用此方法，你可以通过自然语言描述一个断言条件，让 AI 判断该条件是否为真。当条件不满足时，SDK 会抛出错误，并在错误信息中追加 AI 返回的详细原因。
+通过自然语言描述一个断言条件，让 AI 判断该条件是否为真。当条件不满足时，SDK 会抛出错误，并在错误信息中追加 AI 返回的详细原因。
 
 * 类型
 
@@ -288,9 +357,43 @@ expect(onesieItem.price).toBe(7.99);
 ```
 :::
 
+### `agent.aiLocate()`
+
+通过自然语言描述一个元素的定位。
+
+* 类型
+
+```typescript
+function aiLocate(locate: string, options?: Object): Promise<{
+  rect: {
+    left: number;
+    top: number;
+    width: number;
+    height: number;
+  };
+  center: [number, number];
+}>;
+```
+
+* 参数：
+  * `locate: string` - 用自然语言描述的元素定位。
+  * `options?: Object` - 可选，一个配置对象，包含：
+    * `deepThink?: boolean` - 是否开启深度思考。如果为 true，Midscene 会调用 AI 模型两次以精确定位元素。
+
+* 返回值：
+  * 返回一个 Promise。当元素定位成功时解析为元素定位信息。
+
+* 示例：
+
+```typescript
+const locateInfo = await agent.aiLocate('页面顶部的登录按钮');
+console.log(locateInfo);
+```
+
+
 ### `agent.aiWaitFor()`
 
-使用此方法，你可以等待某个断言条件成为真。考虑到 AI 服务的成本，检查间隔不会超过 `checkIntervalMs` 毫秒。
+等待某个条件达成。考虑到 AI 服务的成本，检查间隔不会超过 `checkIntervalMs` 毫秒。
 
 * 类型
 
@@ -332,7 +435,7 @@ await agent.aiWaitFor("购物车图标显示数量为 2", {
 
 ### `agent.runYaml()`
 
-使用此方法，你可以执行一个 YAML 格式的自动化脚本。脚本中的 `tasks` 部分会被执行，并返回所有 `.aiQuery` 调用的结果。
+执行一个 YAML 格式的自动化脚本。脚本中的 `tasks` 部分会被执行，并返回所有 `.aiQuery` 调用的结果。
 
 * 类型
 
@@ -369,7 +472,7 @@ console.log(result);
 
 ### `agent.setAIActionContext()`
 
-这个方法允许你设置在调用 `agent.aiAction()` 时，发送给 AI 模型的背景知识。
+设置在调用 `agent.aiAction()` 时，发送给 AI 模型的背景知识。
 
 * 类型
 
@@ -433,10 +536,10 @@ overrideAIConfig({
 
 ### 打印 AI 性能信息
 
-设置 `MIDSCENE_DEBUG_AI_PROFILE` 变量，你可以看到每次调用 AI 的时间和 token 数量。
+设置 `DEBUG=midscene:ai:profile:stats` 环境变量，你可以看到每次调用 AI 的时间和 token 数量。
 
 ```bash
-export MIDSCENE_DEBUG_AI_PROFILE=1
+export DEBUG=midscene:ai:profile:stats
 ```
 
 ### 自定义运行产物目录

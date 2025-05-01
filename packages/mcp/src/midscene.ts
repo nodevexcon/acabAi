@@ -1,6 +1,6 @@
+import { appendFileSync } from 'node:fs';
 import {
   MIDSCENE_MCP_USE_PUPPETEER_MODE,
-  getAIConfig,
   getAIConfigInBoolean,
 } from '@midscene/shared/env';
 import {
@@ -8,15 +8,14 @@ import {
   allConfigFromEnv,
   overrideAIConfig,
 } from '@midscene/web/bridge-mode';
-import type { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type {
-  CallToolResult,
   ImageContent,
   TextContent,
 } from '@modelcontextprotocol/sdk/types.js';
 import { z } from 'zod';
 import { PuppeteerBrowserAgent, ensureBrowser } from './puppeteer';
+import { tools } from './tools';
 
 declare global {
   interface Window {
@@ -37,7 +36,6 @@ export class MidsceneManager {
     this.mcpServer = server;
     this.initEnv();
     this.registerTools();
-    this.initAgent();
   }
 
   private initEnv() {
@@ -52,62 +50,98 @@ export class MidsceneManager {
     overrideAIConfig(envOverrides);
   }
 
-  // Asynchronously initializes or re-initializes the browser agent.
-  // Accepts an optional 'reInit' flag (default: false). If true, forces re-creation of the agent.
-  private async initAgent(reInit = false) {
-    // Check if an agent instance already exists.
-    if (this.agent) {
-      // If 'reInit' is requested,
-      if (reInit) {
-        // Properly clean up the existing agent resources.
+  // initializes or re-initializes the browser agent.
+  private async initAgent(openNewTabWithUrl?: string) {
+    // re-init the agent if url is provided
+    if (this.agent && openNewTabWithUrl) {
+      try {
         await this.agent.destroy();
-        // Clear the existing agent instance.
-        this.agent = undefined;
-      } else {
-        // If an agent exists and re-initialization is not requested, return the existing one.
-        return this.agent;
+      } catch (e) {
+        // console.error('failed to destroy agent', e);
       }
+      this.agent = undefined;
     }
+
+    if (this.agent) return this.agent;
 
     // Check if running in bridge mode (connecting to an existing Chrome instance).
     if (!this.puppeteerMode) {
+      this.agent = await this.initAgentByBridgeMode(openNewTabWithUrl);
+    } else {
+      this.agent = await this.initPuppeteerAgent(openNewTabWithUrl);
+    }
+    return this.agent;
+  }
+
+  private async initAgentByBridgeMode(
+    openNewTabWithUrl?: string,
+  ): Promise<AgentOverChromeBridge> {
+    let agent: AgentOverChromeBridge;
+    try {
       // Create a new agent instance designed for bridge mode.
-      this.agent = new AgentOverChromeBridge();
+      agent = new AgentOverChromeBridge({
+        closeConflictServer: true,
+      });
       // If this is the first initialization (not re-init),
-      if (!reInit) {
+      if (!openNewTabWithUrl) {
         // Connect the agent to the currently active tab in the browser.
-        await this.agent.connectCurrentTab();
-        const tabsInfo = await this.agent.getBrowserTabList();
+        await agent.connectCurrentTab();
+        const tabsInfo = await agent.getBrowserTabList();
         // Send active tab information in a well-structured format
         this.sendActiveTabInfo(tabsInfo);
+      } else {
+        await agent.connectNewTabWithUrl(openNewTabWithUrl);
       }
-    } else {
-      // If not in bridge mode, use Puppeteer to control a browser instance.
-      // Ensure a Puppeteer browser instance is running and get its details.
-      const { browser, pages } = await ensureBrowser({});
-      // Create a new, blank page (tab) in the browser.
-      const newPage = await browser.newPage();
-      // Navigate the new page to Google as a starting point.
-      await newPage.goto('https://google.com');
-      // Create a new Puppeteer-specific agent instance, controlling the browser and the new page.
-      this.agent = new PuppeteerBrowserAgent(browser, newPage);
+      return agent;
+    } catch (err) {
+      //@ts-ignore
+      if (agent) {
+        await agent.destroy();
+      }
+      console.error('Bridge mode connection failed', err);
+      // Check if we've exceeded the maximum retry attempts
+      throw new Error(
+        'Unable to establish Bridge mode connection. Please check the following issues:\n' +
+          '1. Confirm Chrome browser is running\n' +
+          '2. Midscene extension is properly installed in Chrome\n' +
+          '3. Bridge mode is enabled in the extension settings\n' +
+          '4. No other MCP clients are using the Midscene MCP server',
+      );
     }
-    // Return the newly created or re-initialized agent instance.
-    return this.agent;
+  }
+
+  private async initPuppeteerAgent(openNewTabWithUrl?: string) {
+    // If not in bridge mode, use Puppeteer to control a browser instance.
+    // Ensure a Puppeteer browser instance is running and get its details.
+    const { browser } = await ensureBrowser({});
+    // Create a new, blank page (tab) in the browser.
+    const newPage = await browser.newPage();
+    // Navigate the new page to Google as a starting point.
+    if (openNewTabWithUrl) {
+      await newPage.goto(openNewTabWithUrl);
+    } else {
+      await newPage.goto('https://google.com');
+    }
+    // Create a new Puppeteer-specific agent instance, controlling the browser and the new page.
+    const agent = new PuppeteerBrowserAgent(browser, newPage);
+    return agent;
   }
 
   private registerTools() {
     this.mcpServer.tool(
-      'midscene_navigate',
-      'Navigates the browser to the specified URL. Always opens in the current tab.',
-      { url: z.string().describe('URL to navigate to') },
+      tools.midscene_navigate.name,
+      tools.midscene_navigate.description,
+      {
+        url: z.string().describe('URL to navigate to'),
+      },
       async ({ url }) => {
-        const agent = await this.initAgent(true);
-        await agent.connectNewTabWithUrl(url);
+        await this.initAgent(url);
         return {
           content: [
-            { type: 'text', text: `Navigated to ${url}` },
-            { type: 'text', text: `report file: ${agent.reportFile}` },
+            {
+              type: 'text',
+              text: `Navigated to ${url}`,
+            },
           ],
           isError: false,
         };
@@ -115,8 +149,8 @@ export class MidsceneManager {
     );
 
     this.mcpServer.tool(
-      'midscene_get_tabs',
-      'Retrieves a list of all open browser tabs, including their ID, title, and URL.',
+      tools.midscene_get_tabs.name,
+      tools.midscene_get_tabs.description,
       {},
       async () => {
         const agent = await this.initAgent();
@@ -134,8 +168,8 @@ export class MidsceneManager {
     );
 
     this.mcpServer.tool(
-      'midscene_set_active_tab',
-      "Switches the browser's focus to the tab specified by its ID. Use midscene_get_tabs first to find the correct tab ID.",
+      tools.midscene_set_active_tab.name,
+      tools.midscene_set_active_tab.description,
       { tabId: z.string().describe('The ID of the tab to set as active.') },
       async ({ tabId }) => {
         const agent = await this.initAgent();
@@ -148,8 +182,8 @@ export class MidsceneManager {
     );
 
     this.mcpServer.tool(
-      'midscene_aiWaitFor',
-      'Waits until a specified condition, described in natural language, becomes true on the page. Polls the condition using AI.',
+      tools.midscene_aiWaitFor.name,
+      tools.midscene_aiWaitFor.description,
       {
         assertion: z
           .string()
@@ -182,8 +216,8 @@ export class MidsceneManager {
     );
 
     this.mcpServer.tool(
-      'midscene_aiAssert',
-      'Asserts that a specified condition, described in natural language, is true on the page. Polls the condition using AI.',
+      tools.midscene_aiAssert.name,
+      tools.midscene_aiAssert.description,
       {
         assertion: z
           .string()
@@ -203,8 +237,8 @@ export class MidsceneManager {
     );
 
     this.mcpServer.tool(
-      'midscene_aiKeyboardPress',
-      'Presses a specific key on the keyboard.',
+      tools.midscene_aiKeyboardPress.name,
+      tools.midscene_aiKeyboardPress.description,
       {
         key: z
           .string()
@@ -243,8 +277,8 @@ export class MidsceneManager {
     );
 
     this.mcpServer.tool(
-      'midscene_screenshot',
-      'Captures a screenshot of the currently active browser tab and saves it with the given name.',
+      tools.midscene_screenshot.name,
+      tools.midscene_screenshot.description,
       {
         name: z.string().describe('Name for the screenshot'),
       },
@@ -274,8 +308,8 @@ export class MidsceneManager {
     );
 
     this.mcpServer.tool(
-      'midscene_aiTap',
-      'Locates and clicks an element on the current page based on a natural language description (selector).',
+      tools.midscene_aiTap.name,
+      tools.midscene_aiTap.description,
       {
         locate: z
           .string()
@@ -295,8 +329,8 @@ export class MidsceneManager {
     );
 
     this.mcpServer.tool(
-      'midscene_aiScroll',
-      'Scrolls the page or a specified element. Can scroll by a fixed amount or until an edge is reached.',
+      tools.midscene_aiScroll.name,
+      tools.midscene_aiScroll.description,
       {
         direction: z
           .enum(['up', 'down', 'left', 'right'])
@@ -345,20 +379,22 @@ export class MidsceneManager {
     );
 
     this.mcpServer.tool(
-      'midscene_aiInput',
-      'Inputs text into a specified form field or element identified by a natural language selector.',
+      tools.midscene_aiInput.name,
+      tools.midscene_aiInput.description,
       {
         value: z.string().describe('The text to input'),
-        selector: z
+        locate: z
           .string()
-          .describe('Describe the element to input text into'),
+          .describe(
+            'Describe the element to input text into, use natural language',
+          ),
       },
-      async ({ value, selector }) => {
+      async ({ value, locate }) => {
         const agent = await this.initAgent();
-        await agent.aiInput(value, selector);
+        await agent.aiInput(value, locate);
         return {
           content: [
-            { type: 'text', text: `Inputted ${value} into ${selector}` },
+            { type: 'text', text: `Inputted ${value} into ${locate}` },
             { type: 'text', text: `report file: ${agent.reportFile}` },
           ],
           isError: false,
@@ -367,36 +403,25 @@ export class MidsceneManager {
     );
 
     this.mcpServer.tool(
-      'midscene_aiHover',
-      'Moves the mouse cursor to hover over an element identified by a natural language selector.',
-      { selector: z.string() },
-      async ({ selector }) => {
+      tools.midscene_aiHover.name,
+      tools.midscene_aiHover.description,
+      {
+        locate: z
+          .string()
+          .describe('Use natural language describe the element to hover over'),
+      },
+      async ({ locate }) => {
         const agent = await this.initAgent();
-        await agent.aiHover(selector);
+        await agent.aiHover(locate);
         return {
           content: [
-            { type: 'text', text: `Hovered over ${selector}` },
+            { type: 'text', text: `Hovered over ${locate}` },
             { type: 'text', text: `report file: ${agent.reportFile}` },
           ],
           isError: false,
         };
       },
     );
-
-    // this.mcpServer.tool(
-    //   'midscene_evaluate',
-    //   'Executes arbitrary JavaScript code within the context of the current page and returns the result.',
-    //   { script: z.string().describe('The JavaScript code string to execute.') },
-    //   async ({ script }) => {
-    //     const agent = await this.initAgent();
-    //     const res = await agent.evaluateJavaScript(script);
-    //     const text = typeof res === 'string' ? res : JSON.stringify(res);
-    //     return {
-    //       content: [{ type: 'text', text }],
-    //       isError: false,
-    //     };
-    //   },
-    // );
   }
 
   public getConsoleLogs(): string {

@@ -2,9 +2,9 @@
 import { setIsMcp } from '@midscene/shared/utils';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { z } from 'zod';
 import { MidsceneManager } from './midscene.js';
 import { PROMPTS } from './prompts.js';
+import { tools } from './tools.js';
 
 declare const __VERSION__: string;
 
@@ -17,29 +17,21 @@ const server = new McpServer({
     'Midscene MCP Server: Control the browser using natural language commands for navigation, clicking, input, hovering, and achieving goals. Also supports screenshots and JavaScript execution.',
 });
 
-server.resource(
-  'playwright-example',
-  'generate-code://playwright-example',
-  async (uri) => ({
-    contents: [
-      {
-        uri: uri.href,
-        text: PROMPTS.PLAYWRIGHT_CODE_EXAMPLE,
-      },
-    ],
-  }),
-);
-server.resource(
-  'midscene-api-docs',
-  'generate-code://midscene-api-docs',
-  async (uri) => ({
-    contents: [
-      {
-        uri: uri.href,
-        text: PROMPTS.MIDSCENE_API_DOCS,
-      },
-    ],
-  }),
+server.tool(
+  tools.midscene_playwright_example.name,
+  tools.midscene_playwright_example.description,
+  {},
+  async () => {
+    return {
+      content: [
+        {
+          type: 'text',
+          text: PROMPTS.PLAYWRIGHT_CODE_EXAMPLE,
+        },
+      ],
+      isError: false,
+    };
+  },
 );
 
 const midsceneManager = new MidsceneManager(server);
@@ -53,6 +45,6 @@ runServer().catch(console.error);
 
 process.stdin.on('close', () => {
   console.error('Midscene MCP Server closing, cleaning up browser...');
-  midsceneManager.closeBrowser().catch(console.error);
   server.close();
+  midsceneManager.closeBrowser().catch(console.error);
 });
