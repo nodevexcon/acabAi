@@ -22,9 +22,9 @@ import {
   MIDSCENE_FORCE_DEEP_THINK,
   getAIConfigInBoolean,
   vlLocateMode,
-} from '@midscene/shared/env';
-import { getDebug } from '@midscene/shared/logger';
-import { assert } from '@midscene/shared/utils';
+} from '@acabai/shared/env';
+import { getDebug } from '@acabai/shared/logger';
+import { assert } from '@acabai/shared/utils';
 import { emitInsightDump } from './utils';
 
 export interface LocateOpts {
@@ -285,7 +285,7 @@ export default class Insight<
     };
   }
 
-  async assert(assertion: string): Promise<InsightAssertionResponse> {
+  async assert(assertion: string, systemPrompt?: string): Promise<InsightAssertionResponse> {
     if (typeof assertion !== 'string') {
       throw new Error(
         'This is the assert method for Midscene, the first argument should be a string. If you want to use the assert method from Node.js, please import it from the Node.js assert module.',
@@ -300,6 +300,7 @@ export default class Insight<
     const assertResult = await AiAssert({
       assertion,
       context,
+      systemPrompt
     });
 
     const timeCost = Date.now() - startTime;
@@ -314,6 +315,7 @@ export default class Insight<
       type: 'assert',
       userQuery: {
         assertion,
+        systemPrompt
       },
       matchedElement: [],
       data: null,

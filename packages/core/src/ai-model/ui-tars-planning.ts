@@ -1,8 +1,8 @@
 import type { PlanningAction } from '@/types';
-import { uiTarsModelVersion } from '@midscene/shared/env';
-import { transformHotkeyInput } from '@midscene/shared/keyboard-layout';
-import { getDebug } from '@midscene/shared/logger';
-import { assert } from '@midscene/shared/utils';
+import { uiTarsModelVersion } from '@acabai/shared/env';
+import { transformHotkeyInput } from '@acabai/shared/keyboard-layout';
+import { getDebug } from '@acabai/shared/logger';
+import { assert } from '@acabai/shared/utils';
 import { actionParser } from '@ui-tars/action-parser';
 import type { ChatCompletionMessageParam } from 'openai/resources';
 import { AIActionType } from './common';

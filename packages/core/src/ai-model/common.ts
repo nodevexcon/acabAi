@@ -5,7 +5,7 @@ import type {
   Rect,
   Size,
 } from '@/types';
-import { assert } from '@midscene/shared/utils';
+import { assert } from '@acabai/shared/utils';
 
 import type {
   ChatCompletionSystemMessageParam,
@@ -18,11 +18,11 @@ import {
 } from './service-caller/index';
 
 import type { PlanningLocateParam } from '@/types';
-import { NodeType } from '@midscene/shared/constants';
-import { vlLocateMode } from '@midscene/shared/env';
-import { treeToList } from '@midscene/shared/extractor';
-import { compositeElementInfoImg } from '@midscene/shared/img';
-import { getDebug } from '@midscene/shared/logger';
+import { NodeType } from '@acabai/shared/constants';
+import { vlLocateMode } from '@acabai/shared/env';
+import { treeToList } from '@acabai/shared/extractor';
+import { compositeElementInfoImg } from '@acabai/shared/img';
+import { getDebug } from '@acabai/shared/logger';
 
 export type AIArgs = [
   ChatCompletionSystemMessageParam,

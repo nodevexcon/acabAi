@@ -1,5 +1,5 @@
 import { PromptTemplate } from '@langchain/core/prompts';
-import type { vlLocateMode } from '@midscene/shared/env';
+import type { vlLocateMode } from '@acabai/shared/env';
 import type { ResponseFormatJSONSchema } from 'openai/resources';
 import { bboxDescription } from './common';
 export function systemPromptToLocateElement(
@@ -178,7 +178,7 @@ Output Example:
   "errors": []
 }
 \`\`\`
-  
+
   `;
 }
 

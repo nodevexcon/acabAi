@@ -10,8 +10,8 @@ import {
   getAIConfig,
   uiTarsModelVersion,
   vlLocateMode,
-} from '@midscene/shared/env';
-import { uuid } from '@midscene/shared/utils';
+} from '@acabai/shared/env';
+import { uuid } from '@acabai/shared/utils';
 
 export function emitInsightDump(
   data: PartialInsightDumpFromSDK,

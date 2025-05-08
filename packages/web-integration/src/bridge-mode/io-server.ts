@@ -1,5 +1,5 @@
-import { sleep } from '@midscene/core/utils';
-import { logMsg } from '@midscene/shared/utils';
+import { sleep } from '@acabai/core/utils';
+import { logMsg } from '@acabai/shared/utils';
 import { Server, type Socket as ServerSocket } from 'socket.io';
 import { io as ClientIO, type Socket as ClientSocket } from 'socket.io-client';
 

@@ -1,6 +1,6 @@
 import type { ElementInfo } from './';
 import { NodeType } from './constants';
-import { midsceneGenerateHash } from './util';
+import { acabaiGenerateHash } from './util';
 
 // Definition of NodeDescriptor interface
 interface NodeDescriptor {
@@ -142,7 +142,7 @@ export function extractTextWithPosition(
   function collectElementInfo(node: Node) {
     const attributes = getNodeAttributes(node);
     const rect = getRect(attributes);
-    const nodeHashId = midsceneGenerateHash(null, attributes.placeholder, rect);
+    const nodeHashId = acabaiGenerateHash(null, attributes.placeholder, rect);
     const text = validTextNodeContent(node);
 
     let nodeType;

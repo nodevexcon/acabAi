@@ -3,20 +3,11 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import * as path from 'node:path';
 import { dirname } from 'node:path';
-import {
-  defaultRunDirName,
-  getMidsceneRunSubDir,
-  logDir,
-} from '@midscene/shared/common';
-import {
-  MIDSCENE_DEBUG_MODE,
-  MIDSCENE_OPENAI_INIT_CONFIG_JSON,
-  getAIConfig,
-  getAIConfigInJson,
-} from '@midscene/shared/env';
-import { getRunningPkgInfo } from '@midscene/shared/fs';
-import { assert, getGlobalScope } from '@midscene/shared/utils';
-import { ifInBrowser, uuid } from '@midscene/shared/utils';
+// Import from shared package
+import { defaultRunDirName, getMidsceneRunSubDir, logDir } from '@acabai/shared/common';
+import { MIDSCENE_DEBUG_MODE, MIDSCENE_OPENAI_INIT_CONFIG_JSON, getAIConfig, getAIConfigInJson } from '@acabai/shared/env';
+import { getRunningPkgInfo } from '@acabai/shared/fs';
+import { assert, getGlobalScope, ifInBrowser, uuid } from '@acabai/shared/utils';
 import type { Rect, ReportDumpWithAttributes } from './types';
 
 let logEnvReady = false;

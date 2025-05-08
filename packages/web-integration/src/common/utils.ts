@@ -3,14 +3,14 @@ import type {
   ElementTreeNode,
   PlaywrightParserOpt,
   UIContext,
-} from '@midscene/core';
-import { uploadTestInfoToServer } from '@midscene/core/utils';
-import { MIDSCENE_REPORT_TAG_NAME, getAIConfig } from '@midscene/shared/env';
-import type { ElementInfo } from '@midscene/shared/extractor';
-import { traverseTree, treeToList } from '@midscene/shared/extractor';
-import { resizeImgBase64 } from '@midscene/shared/img';
-import type { DebugFunction } from '@midscene/shared/logger';
-import { assert, logMsg, uuid } from '@midscene/shared/utils';
+} from '@acabai/core';
+import { uploadTestInfoToServer } from '@acabai/core/utils';
+import { ACABAI_REPORT_TAG_NAME, getAIConfig } from '@acabai/shared/env';
+import type { ElementInfo } from '@acabai/shared/extractor';
+import { traverseTree, treeToList } from '@acabai/shared/extractor';
+import { resizeImgBase64 } from '@acabai/shared/img';
+import type { DebugFunction } from '@acabai/shared/logger';
+import { assert, logMsg, uuid } from '@acabai/shared/utils';
 import dayjs from 'dayjs';
 import type { Page as PlaywrightPage } from 'playwright';
 import type { Page as PuppeteerPage } from 'puppeteer';
@@ -80,7 +80,7 @@ export async function parseContextFromWebPage(
 }
 
 export function reportFileName(tag = 'web') {
-  const reportTagName = getAIConfig(MIDSCENE_REPORT_TAG_NAME);
+  const reportTagName = getAIConfig(ACABAI_REPORT_TAG_NAME);
   const dateTimeInFileName = dayjs().format('YYYY-MM-DD_HH-mm-ss');
   // ensure uniqueness at the same time
   const uniqueId = uuid().substring(0, 8);

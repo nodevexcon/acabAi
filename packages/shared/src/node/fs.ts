@@ -26,14 +26,14 @@ export function getRunningPkgInfo(dir?: string): PkgInfo | null {
   if (pkgDir && pkgJsonFile) {
     const { name, version } = JSON.parse(readFileSync(pkgJsonFile, 'utf-8'));
     pkgCacheMap[dirToCheck] = {
-      name: name || 'midscene-unknown-package-name',
+      name: name || 'acabai-unknown-package-name',
       version: version || '0.0.0',
       dir: pkgDir,
     };
     return pkgCacheMap[dirToCheck];
   }
   return {
-    name: 'midscene-unknown-package-name',
+    name: 'acabai-unknown-package-name',
     version: '0.0.0',
     dir: dirToCheck,
   };
@@ -71,7 +71,7 @@ export async function getExtraReturnLogic(tree = false) {
   const scriptPath = path.join(pathDir, './dist/script/htmlElement.js');
   const elementInfosScriptContent = readFileSync(scriptPath, 'utf-8');
   if (tree) {
-    return `${elementInfosScriptContent}midscene_element_inspector.webExtractNodeTree()`;
+    return `${elementInfosScriptContent}acabai_element_inspector.webExtractNodeTree()`;
   }
-  return `${elementInfosScriptContent}midscene_element_inspector.webExtractTextWithPosition()`;
+  return `${elementInfosScriptContent}acabai_element_inspector.webExtractTextWithPosition()`;
 }

@@ -31,10 +31,9 @@ import {
   getAIConfigInBoolean,
   getAIConfigInJson,
   vlLocateMode,
-} from '@midscene/shared/env';
-import { enableDebug, getDebug } from '@midscene/shared/logger';
-import { assert } from '@midscene/shared/utils';
-import { ifInBrowser } from '@midscene/shared/utils';
+} from '@acabai/shared/env';
+import { enableDebug, getDebug } from '@acabai/shared/logger';
+import { assert, ifInBrowser } from '@acabai/shared/utils';
 import dJSON from 'dirty-json';
 import OpenAI, { AzureOpenAI } from 'openai';
 import type { ChatCompletionMessageParam } from 'openai/resources';

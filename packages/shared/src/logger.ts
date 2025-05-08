@@ -3,7 +3,7 @@ import path from 'node:path';
 import debug from 'debug';
 import { isNodeEnv, logDir } from './common';
 
-const topicPrefix = 'midscene';
+const topicPrefix = 'acabai';
 // Map to store file streams
 const logStreams = new Map<string, fs.WriteStream>();
 

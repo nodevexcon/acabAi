@@ -9,14 +9,33 @@ export {
   AiAssert,
 } from './ai-model/index';
 
-export { getAIConfig, MIDSCENE_MODEL_NAME } from '@midscene/shared/env';
+// Export AI config
+export const MIDSCENE_MODEL_NAME = process.env.MIDSCENE_MODEL_NAME || 'gpt-4o';
+
+// Export context engine
+export {
+  ContextEngine,
+  ActionContextIntegrator,
+  generateStepSummary,
+  generateTestRunSummary
+} from './context-engine';
 
 export type * from './types';
 export default Insight;
 export { Executor, Insight, getVersion };
 
 export type {
-  MidsceneYamlScript,
-  MidsceneYamlTask,
-  MidsceneYamlFlowItem,
+  AcabaiYamlScript,
+  AcabaiYamlTask,
+  AcabaiYamlFlowItem,
 } from './yaml';
+
+// Export context engine types
+export type {
+  ContextEngineOptions,
+  CreateTestRunOptions,
+  CreateTestStepOptions,
+  TestRunContext,
+  TestStepContext,
+  TestStepStatus
+} from './context-engine/types';

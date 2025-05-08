@@ -1,10 +1,9 @@
 import { imageInfoOfBase64 } from '@/image/index';
 import type { BaseElement, ElementTreeNode, Size, UIContext } from '@/types';
-import { NodeType } from '@midscene/shared/constants';
-import { vlLocateMode } from '@midscene/shared/env';
-import { descriptionOfTree, treeToList } from '@midscene/shared/extractor';
-import { assert } from '@midscene/shared/utils';
-import { generateHashId } from '@midscene/shared/utils';
+import { NodeType } from '@acabai/shared/constants';
+import { vlLocateMode } from '@acabai/shared/env';
+import { descriptionOfTree, treeToList } from '@acabai/shared/extractor';
+import { assert, generateHashId } from '@acabai/shared/utils';
 
 export function describeSize(size: Size) {
   return `${size.width} x ${size.height}`;

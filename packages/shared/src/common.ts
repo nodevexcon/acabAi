@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { MIDSCENE_RUN_DIR, getAIConfig } from './env';
 
-export const defaultRunDirName = 'midscene_run';
+export const defaultRunDirName = 'hirafi_run';
 // Define locally for now to avoid import issues
 export const isNodeEnv =
   typeof process !== 'undefined' &&
@@ -40,7 +40,7 @@ export const getMidsceneRunBaseDir = () => {
 };
 
 /**
- * Get the path to the midscene_run directory or a subdirectory within it.
+ * Get the path to the hirafi_run directory or a subdirectory within it.
  * Creates the directory if it doesn't exist.
  *
  * @param subdir - Optional subdirectory name (e.g., 'log', 'report')

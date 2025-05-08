@@ -1,16 +1,18 @@
 import assert from 'node:assert';
 import fs from 'node:fs';
 import path from 'node:path';
-import { type Point, type Size, getAIConfig } from '@midscene/core';
-import type { PageType } from '@midscene/core';
-import { getTmpFile } from '@midscene/core/utils';
-import { MIDSCENE_ADB_PATH } from '@midscene/shared/env';
-import type { ElementInfo } from '@midscene/shared/extractor';
-import { isValidPNGImageBuffer, resizeImg } from '@midscene/shared/img';
-import { getDebug } from '@midscene/shared/logger';
-import type { AndroidDevicePage } from '@midscene/web';
+import { type Point, type Size } from '@acabai/core';
+import { getAIConfig } from '@acabai/shared/env';
+import type { PageType } from '@acabai/core';
+import { getTmpFile } from '@acabai/core/utils';
+import { ACABAI_ADB_PATH } from '@acabai/shared/env';
+import type { ElementInfo } from '@acabai/shared/extractor';
+import { isValidPNGImageBuffer, resizeImg } from '@acabai/shared/img';
+import { getDebug } from '@acabai/shared/logger';
+import type { AndroidDevicePage } from '@acabai/web';
 import { ADB } from 'appium-adb';
-const androidScreenshotPath = '/data/local/tmp/midscene_screenshot.png';
+import { type AdbConnectionOptions } from '../utils';
+const androidScreenshotPath = '/data/local/tmp/acabai_screenshot.png';
 export const debugPage = getDebug('android:device');
 
 export class AndroidDevice implements AndroidDevicePage {
@@ -20,13 +22,15 @@ export class AndroidDevice implements AndroidDevicePage {
   private deviceRatio = 1;
   private adb: ADB | null = null;
   private connectingAdb: Promise<ADB> | null = null;
+  private adbConnectionOptions?: AdbConnectionOptions;
   pageType: PageType = 'android';
   uri: string | undefined;
 
-  constructor(deviceId: string) {
+  constructor(deviceId: string, adbConnectionOptions?: AdbConnectionOptions) {
     assert(deviceId, 'deviceId is required for AndroidDevice');
 
     this.deviceId = deviceId;
+    this.adbConnectionOptions = adbConnectionOptions;
   }
 
   public async connect(): Promise<ADB> {
@@ -50,15 +54,26 @@ export class AndroidDevice implements AndroidDevicePage {
       debugPage(`Initializing ADB with device ID: ${this.deviceId}`);
 
       try {
-        const androidAdbPath = getAIConfig(MIDSCENE_ADB_PATH);
+        const androidAdbPath = getAIConfig(ACABAI_ADB_PATH);
 
-        this.adb = await ADB.createADB({
+        const adbOptions: any = {
           udid: this.deviceId,
           adbExecTimeout: 60000,
           executable: androidAdbPath
             ? { path: androidAdbPath, defaultArgs: [] }
             : undefined,
-        });
+        };
+
+        // If remote ADB host is specified, configure for remote connection
+        if (this.adbConnectionOptions?.host) {
+          debugPage(`Using remote ADB server at ${this.adbConnectionOptions.host}:${this.adbConnectionOptions.port || 5037}`);
+          adbOptions.remoteAdbHost = this.adbConnectionOptions.host;
+          if (this.adbConnectionOptions.port) {
+            adbOptions.adbPort = this.adbConnectionOptions.port;
+          }
+        }
+
+        this.adb = await ADB.createADB(adbOptions);
 
         const size = await this.getScreenSize();
         console.log(`
@@ -116,7 +131,7 @@ ${Object.keys(size)
 
             // throw the error again
             throw new Error(
-              `ADB error with device ${deviceId} when calling ${methodName}, please check https://midscenejs.com/integrate-with-android.html#faq : ${error.message}`,
+              `ADB error with device ${deviceId} when calling ${methodName}, please check https://acabai.com/integrate-with-android.html#faq : ${error.message}`,
               {
                 cause: error,
               },

@@ -8,8 +8,8 @@ import type {
   ExecutorContext,
 } from '@/types';
 import { getVersion } from '@/utils';
-import { MIDSCENE_MODEL_NAME, getAIConfig } from '@midscene/shared/env';
-import { assert } from '@midscene/shared/utils';
+import { MIDSCENE_MODEL_NAME, getAIConfig } from '@acabai/shared/env';
+import { assert } from '@acabai/shared/utils';
 
 export class Executor {
   name: string;

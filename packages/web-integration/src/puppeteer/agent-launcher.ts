@@ -1,10 +1,10 @@
 import { readFileSync } from 'node:fs';
-import { getDebug } from '@midscene/shared/logger';
-import { assert } from '@midscene/shared/utils';
+import { getDebug } from '@acabai/shared/logger';
+import { assert } from '@acabai/shared/utils';
 
 import { PuppeteerAgent, type PuppeteerAgentOptions } from '@/puppeteer/index';
-import type { MidsceneYamlScriptWebEnv } from '@midscene/core';
-import { DEFAULT_WAIT_FOR_NETWORK_IDLE_TIMEOUT } from '@midscene/shared/constants';
+import type { AcabaiYamlScriptWebEnv } from '@acabai/core';
+import { DEFAULT_WAIT_FOR_NETWORK_IDLE_TIMEOUT } from '@acabai/shared/constants';
 
 // Import standard puppeteer as a fallback
 import puppeteer from 'puppeteer';
@@ -41,7 +41,7 @@ interface FreeFn {
 const launcherDebug = getDebug('puppeteer:launcher');
 
 export async function launchPuppeteerPage(
-  target: MidsceneYamlScriptWebEnv,
+  target: AcabaiYamlScriptWebEnv,
   preference?: {
     headed?: boolean;
     keepWindow?: boolean;
@@ -244,7 +244,7 @@ export async function launchPuppeteerPage(
 }
 
 export async function puppeteerAgentForTarget(
-  target: MidsceneYamlScriptWebEnv,
+  target: AcabaiYamlScriptWebEnv,
   preference?: {
     headed?: boolean;
     keepWindow?: boolean;

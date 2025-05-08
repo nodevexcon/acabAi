@@ -8,10 +8,10 @@
 import type { WebKeyInput } from '@/common/page';
 import { limitOpenNewTabScript } from '@/common/ui-utils';
 import type { AbstractPage, ChromePageDestroyOptions } from '@/page';
-import type { ElementTreeNode, Point, Size } from '@midscene/core';
-import type { ElementInfo } from '@midscene/shared/extractor';
-import { treeToList } from '@midscene/shared/extractor';
-import { assert } from '@midscene/shared/utils';
+import type { ElementTreeNode, Point, Size } from '@acabai/core';
+import type { ElementInfo } from '@acabai/shared/extractor';
+import { treeToList } from '@acabai/shared/extractor';
+import { assert } from '@acabai/shared/utils';
 import type { Protocol as CDPTypes } from 'devtools-protocol';
 import { CdpKeyboard } from './cdpInput';
 import {
@@ -165,9 +165,9 @@ export default class ChromeExtensionProxyPage implements AbstractPage {
   private async showMousePointer(x: number, y: number) {
     // update mouse pointer while redirecting
     const pointerScript = `(() => {
-      if(typeof window.midsceneWaterFlowAnimation !== 'undefined') {
-        window.midsceneWaterFlowAnimation.enable();
-        window.midsceneWaterFlowAnimation.showMousePointer(${x}, ${y});
+      if(typeof window.acabaiWaterFlowAnimation !== 'undefined') {
+        window.acabaiWaterFlowAnimation.enable();
+        window.acabaiWaterFlowAnimation.showMousePointer(${x}, ${y});
       } else {
         console.log('midsceneWaterFlowAnimation is not defined');
       }
@@ -181,8 +181,8 @@ export default class ChromeExtensionProxyPage implements AbstractPage {
   private async hideMousePointer() {
     await this.sendCommandToDebugger('Runtime.evaluate', {
       expression: `(() => {
-        if(typeof window.midsceneWaterFlowAnimation !== 'undefined') {
-          window.midsceneWaterFlowAnimation.hideMousePointer();
+        if(typeof window.acabaiWaterFlowAnimation !== 'undefined') {
+          window.acabaiWaterFlowAnimation.hideMousePointer();
         }
       })()`,
     });
@@ -273,7 +273,7 @@ export default class ChromeExtensionProxyPage implements AbstractPage {
 
     const expression = () => {
       return {
-        tree: (window as any).midscene_element_inspector.webExtractNodeTree(),
+        tree: (window as any).acabai_element_inspector.webExtractNodeTree(),
         size: {
           width: document.documentElement.clientWidth,
           height: document.documentElement.clientHeight,

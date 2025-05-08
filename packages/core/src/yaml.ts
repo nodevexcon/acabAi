@@ -15,25 +15,25 @@ export interface scrollParam {
   distance?: null | number; // distance in px
 }
 
-export interface MidsceneYamlScript {
-  target?: MidsceneYamlScriptWebEnv;
-  web?: MidsceneYamlScriptWebEnv;
-  android?: MidsceneYamlScriptAndroidEnv;
-  tasks: MidsceneYamlTask[];
+export interface AcabaiYamlScript {
+  target?: AcabaiYamlScriptWebEnv;
+  web?: AcabaiYamlScriptWebEnv;
+  android?: AcabaiYamlScriptAndroidEnv;
+  tasks: AcabaiYamlTask[];
 }
 
-export interface MidsceneYamlTask {
+export interface AcabaiYamlTask {
   name: string;
-  flow: MidsceneYamlFlowItem[];
+  flow: AcabaiYamlFlowItem[];
   continueOnError?: boolean;
 }
 
-export interface MidsceneYamlScriptEnvBase {
+export interface AcabaiYamlScriptEnvBase {
   output?: string;
   aiActionContext?: string;
 }
 
-export interface MidsceneYamlScriptWebEnv extends MidsceneYamlScriptEnvBase {
+export interface AcabaiYamlScriptWebEnv extends AcabaiYamlScriptEnvBase {
   // for web only
   serve?: string;
   url: string;
@@ -64,8 +64,8 @@ export interface MidsceneYamlScriptWebEnv extends MidsceneYamlScriptEnvBase {
   closeNewTabsAfterDisconnect?: boolean;
 }
 
-export interface MidsceneYamlScriptAndroidEnv
-  extends MidsceneYamlScriptEnvBase {
+export interface AcabaiYamlScriptAndroidEnv
+  extends AcabaiYamlScriptEnvBase {
   // The Android device ID to connect to, optional, will use the first device if not specified
   deviceId?: string;
 
@@ -73,102 +73,102 @@ export interface MidsceneYamlScriptAndroidEnv
   launch?: string;
 }
 
-export type MidsceneYamlScriptEnv =
-  | MidsceneYamlScriptWebEnv
-  | MidsceneYamlScriptAndroidEnv;
+export type AcabaiYamlScriptEnv =
+  | AcabaiYamlScriptWebEnv
+  | AcabaiYamlScriptAndroidEnv;
 
-export interface MidsceneYamlFlowItemAIAction {
+export interface AcabaiYamlFlowItemAIAction {
   ai?: string; // this is the shortcut for aiAction
   aiAction?: string;
   aiActionProgressTips?: string[];
 }
 
-export interface MidsceneYamlFlowItemAIAssert {
+export interface AcabaiYamlFlowItemAIAssert {
   aiAssert: string;
 }
 
-export interface MidsceneYamlFlowItemAIQuery {
+export interface AcabaiYamlFlowItemAIQuery {
   aiQuery: string;
   name?: string;
 }
 
-export interface MidsceneYamlFlowItemAINumber {
+export interface AcabaiYamlFlowItemAINumber {
   aiNumber: string;
   name?: string;
 }
 
-export interface MidsceneYamlFlowItemAINString {
+export interface AcabaiYamlFlowItemAINString {
   aiString: string;
   name?: string;
 }
 
-export interface MidsceneYamlFlowItemAIBoolean {
+export interface AcabaiYamlFlowItemAIBoolean {
   aiBoolean: string;
   name?: string;
 }
 
-export interface MidsceneYamlFlowItemAILocate {
+export interface AcabaiYamlFlowItemAILocate {
   aiLocate: string;
   name?: string;
 }
 
-export interface MidsceneYamlFlowItemAIWaitFor {
+export interface AcabaiYamlFlowItemAIWaitFor {
   aiWaitFor: string;
   timeout?: number;
 }
 
-export interface MidsceneYamlFlowItemAITap extends LocateOption {
+export interface AcabaiYamlFlowItemAITap extends LocateOption {
   aiTap: string;
 }
 
-export interface MidsceneYamlFlowItemAIHover extends LocateOption {
+export interface AcabaiYamlFlowItemAIHover extends LocateOption {
   aiHover: string;
 }
 
-export interface MidsceneYamlFlowItemAIInput extends LocateOption {
+export interface AcabaiYamlFlowItemAIInput extends LocateOption {
   aiInput: string; // value to input
   locate: string; // where to input
 }
 
-export interface MidsceneYamlFlowItemAIKeyboardPress extends LocateOption {
+export interface AcabaiYamlFlowItemAIKeyboardPress extends LocateOption {
   aiKeyboardPress: string;
   locate?: string; // where to press, optional
 }
 
-export interface MidsceneYamlFlowItemAIScroll
+export interface AcabaiYamlFlowItemAIScroll
   extends LocateOption,
     PlanningActionParamScroll {
   aiScroll: null;
   locate?: string; // which area to scroll, optional
 }
 
-export interface MidsceneYamlFlowItemEvaluateJavaScript {
+export interface AcabaiYamlFlowItemEvaluateJavaScript {
   javascript: string;
   name?: string;
 }
 
-export interface MidsceneYamlFlowItemSleep {
+export interface AcabaiYamlFlowItemSleep {
   sleep: number;
 }
 
-export type MidsceneYamlFlowItem =
-  | MidsceneYamlFlowItemAIAction
-  | MidsceneYamlFlowItemAIAssert
-  | MidsceneYamlFlowItemAIQuery
-  | MidsceneYamlFlowItemAIWaitFor
-  | MidsceneYamlFlowItemAITap
-  | MidsceneYamlFlowItemAIHover
-  | MidsceneYamlFlowItemAIInput
-  | MidsceneYamlFlowItemAIKeyboardPress
-  | MidsceneYamlFlowItemAIScroll
-  | MidsceneYamlFlowItemSleep;
+export type AcabaiYamlFlowItem =
+  | AcabaiYamlFlowItemAIAction
+  | AcabaiYamlFlowItemAIAssert
+  | AcabaiYamlFlowItemAIQuery
+  | AcabaiYamlFlowItemAIWaitFor
+  | AcabaiYamlFlowItemAITap
+  | AcabaiYamlFlowItemAIHover
+  | AcabaiYamlFlowItemAIInput
+  | AcabaiYamlFlowItemAIKeyboardPress
+  | AcabaiYamlFlowItemAIScroll
+  | AcabaiYamlFlowItemSleep;
 
 export interface FreeFn {
   name: string;
   fn: () => void;
 }
 
-export interface ScriptPlayerTaskStatus extends MidsceneYamlTask {
+export interface ScriptPlayerTaskStatus extends AcabaiYamlTask {
   status: ScriptPlayerStatusValue;
   currentStep?: number;
   totalSteps: number;

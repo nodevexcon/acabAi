@@ -1,5 +1,5 @@
-import type { BaseElement, Rect } from '@midscene/core';
-import type { NodeType } from '@midscene/shared/constants';
+import type { BaseElement, Rect } from '@acabai/core';
+import type { NodeType } from '@acabai/shared/constants';
 
 export interface WebElementInfoType extends BaseElement {
   id: string;

@@ -1,8 +1,8 @@
 <p align="center">
-  <img alt="Midscene.js"  width="260" src="https://github.com/user-attachments/assets/f60de3c1-dd6f-4213-97a1-85bf7c6e79e4">
+  <img alt="acabAI"  width="260" src="https://github.com/user-attachments/assets/f60de3c1-dd6f-4213-97a1-85bf7c6e79e4">
 </p>
 
-<h1 align="center">Midscene.js</h1>
+<h1 align="center">acabAI</h1>
 <div align="center">
 
 English | [简体中文](./README.zh.md)
@@ -22,7 +22,7 @@ English | [简体中文](./README.zh.md)
   <a href="https://x.com/midscene_ai"><img src="https://img.shields.io/twitter/follow/midscene_ai?style=flat-square" alt="twitter" /></a>
 </p>
 
-Midscene.js allows AI to serve as your web and Android operator 🤖. Simply describe what you want to achieve in natural language, and it will assist you in operating the interface, validating content, and extracting data. Whether you seek a quick experience or in-depth development, you'll find it easy to get started.
+acabAI allows AI to serve as your web and Android operator 🤖. Simply describe what you want to achieve in natural language, and it will assist you in operating the interface, validating content, and extracting data. Whether you seek a quick experience or in-depth development, you'll find it easy to get started.
 
 ## Showcases
 
@@ -63,7 +63,7 @@ There are so many UI automation tools out there, and each one seems to be all-po
 
 * Integrate with Javascript: You can always bet on Javascript 😎
 
-## 📄 Resources 
+## 📄 Resources
 
 * [Home Page: https://midscenejs.com](https://midscenejs.com/)
 * Web Browser Automation

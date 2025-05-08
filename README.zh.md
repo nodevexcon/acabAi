@@ -1,8 +1,8 @@
 <p align="center">
-  <img alt="Midscene.js"  width="260" src="https://github.com/user-attachments/assets/f60de3c1-dd6f-4213-97a1-85bf7c6e79e4">
+  <img alt="acabAI"  width="260" src="https://github.com/user-attachments/assets/f60de3c1-dd6f-4213-97a1-85bf7c6e79e4">
 </p>
 
-<h1 align="center">Midscene.js</h1>
+<h1 align="center">acabAI</h1>
 <div align="center">
 
 [English](./README.md) | 简体中文
@@ -22,7 +22,7 @@
   <a href="https://x.com/midscene_ai"><img src="https://img.shields.io/twitter/follow/midscene_ai?style=flat-square" alt="twitter" /></a>
 </p>
 
-Midscene.js 是一个 AI 操作助手，适用于 Web、Android、自动化和测试。只需用自然语言描述你想做什么，它就能帮你操作网页、验证内容，并提取数据。无论你是想快速体验还是深度开发，都可以轻松上手。
+acabAI 是一个 AI 操作助手，适用于 Web、Android、自动化和测试。只需用自然语言描述你想做什么，它就能帮你操作网页、验证内容，并提取数据。无论你是想快速体验还是深度开发，都可以轻松上手。
 
 ## 案例
 
@@ -52,7 +52,7 @@ Midscene.js 是一个 AI 操作助手，适用于 Web、Android、自动化和�
 - **理解UI、JSON格式回答 🔍**：你可以提出关于数据格式的要求，然后得到 JSON 格式的预期回应。
 - **直观断言 🤔**：用自然语言表达你的断言，AI 会理解并处理。
 
-## ✨ 选择 AI 模型 
+## ✨ 选择 AI 模型
 
 你可以使用多模态 LLM 模型，如 `gpt-4o`，或者视觉语言模型，如 `Qwen2.5-VL`，`gemini-2.5-pro` 和 `UI-TARS`。其中 `UI-TARS` 是一个专为 UI 自动化设计的大模型。
 

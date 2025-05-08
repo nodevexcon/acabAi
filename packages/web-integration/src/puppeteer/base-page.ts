@@ -1,11 +1,11 @@
-import type { ElementTreeNode, Point, Size } from '@midscene/core';
-import { sleep } from '@midscene/core/utils';
-import { DEFAULT_WAIT_FOR_NAVIGATION_TIMEOUT } from '@midscene/shared/constants';
-import type { ElementInfo } from '@midscene/shared/extractor';
-import { treeToList } from '@midscene/shared/extractor';
-import { getExtraReturnLogic } from '@midscene/shared/fs';
-import { getDebug } from '@midscene/shared/logger';
-import { assert } from '@midscene/shared/utils';
+import type { ElementTreeNode, Point, Size } from '@acabai/core';
+import { sleep } from '@acabai/core/utils';
+import { DEFAULT_WAIT_FOR_NAVIGATION_TIMEOUT } from '@acabai/shared/constants';
+import type { ElementInfo } from '@acabai/shared/extractor';
+import { treeToList } from '@acabai/shared/extractor';
+import { getExtraReturnLogic } from '@acabai/shared/fs';
+import { getDebug } from '@acabai/shared/logger';
+import { assert } from '@acabai/shared/utils';
 import type { Page as PlaywrightPage } from 'playwright';
 import type { Page as PuppeteerPage } from 'puppeteer';
 import type { WebKeyInput } from '../common/page';
@@ -75,7 +75,7 @@ export class Page<
       } catch (error) {
         // Ignore timeout error, continue execution
         console.warn(
-          '[midscene:warning] Waiting for the navigation has timed out, but Midscene will continue execution. Please check https://midscenejs.com/faq.html#customize-the-network-timeout for more information on customizing the network timeout',
+          '[midscene:warning] Waiting for the navigation has timed out, but Midscene will continue execution. Please check https://acabai.com/faq.html#customize-the-network-timeout for more information on customizing the network timeout',
         );
       }
       debugPage('waitForNavigation end');

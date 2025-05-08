@@ -12,7 +12,9 @@ import {
   type LocateResultElement,
   type OnTaskStartTip,
   type PlanningActionParamScroll,
-} from '@midscene/core';
+  ContextEngine,
+  ActionContextIntegrator,
+} from '@acabai/core';
 
 import { ScriptPlayer, parseYamlScript } from '@/yaml/index';
 import {
@@ -20,14 +22,14 @@ import {
   reportHTMLContent,
   stringifyDumpData,
   writeLogFile,
-} from '@midscene/core/utils';
+} from '@acabai/core/utils';
 import {
   DEFAULT_WAIT_FOR_NAVIGATION_TIMEOUT,
   DEFAULT_WAIT_FOR_NETWORK_IDLE_TIMEOUT,
-} from '@midscene/shared/constants';
-import { vlLocateMode } from '@midscene/shared/env';
-import { getDebug } from '@midscene/shared/logger';
-import { assert } from '@midscene/shared/utils';
+} from '@acabai/shared/constants';
+import { vlLocateMode } from '@acabai/shared/env';
+import { getDebug } from '@acabai/shared/logger';
+import { assert } from '@acabai/shared/utils';
 import { PageTaskExecutor } from '../common/tasks';
 import type { PuppeteerWebPage } from '../puppeteer';
 import type { WebElementInfo } from '../web-element';
@@ -64,6 +66,12 @@ export interface AITaskMetadata {
     prompt_tokens: number;
     completion_tokens: number;
     total_tokens: number;
+    [key: string]: any;
+  };
+  /** DeepThink information */
+  deepthink?: {
+    used: boolean;
+    mode: string;
     [key: string]: any;
   };
   /** AI's thought process */
@@ -137,6 +145,10 @@ export interface PageAgentOpt {
   aiActionContext?: string;
   waitForNavigationTimeout?: number;
   waitForNetworkIdleTimeout?: number;
+  /* Whether to use the context engine for storing action summaries */
+  useContextEngine?: boolean;
+  /* Maximum number of steps to keep in the context engine */
+  contextEngineMaxSteps?: number;
 }
 
 export class PageAgent<PageType extends WebPage = WebPage> {
@@ -161,6 +173,16 @@ export class PageAgent<PageType extends WebPage = WebPage> {
 
   onTaskStartTip?: OnTaskStartTip;
 
+  /**
+   * Context engine for storing action summaries
+   */
+  contextEngine?: ContextEngine;
+
+  /**
+   * Action context integrator for the context engine
+   */
+  actionContextIntegrator?: ActionContextIntegrator;
+
   constructor(page: PageType, opts?: PageAgentOpt) {
     this.page = page;
     this.opts = Object.assign(
@@ -169,6 +191,8 @@ export class PageAgent<PageType extends WebPage = WebPage> {
         autoPrintReportMsg: false,
         groupName: 'Rafi Report',
         groupDescription: '',
+        useContextEngine: false,
+        contextEngineMaxSteps: 10,
       },
       opts || {},
     );
@@ -203,6 +227,22 @@ export class PageAgent<PageType extends WebPage = WebPage> {
     this.reportFileName = reportFileName(
       opts?.testId || this.page.pageType || 'web',
     );
+
+    // Initialize context engine if enabled
+    if (this.opts.useContextEngine) {
+      this.contextEngine = new ContextEngine({
+        maxSteps: this.opts.contextEngineMaxSteps,
+        useAiSummaries: true
+      });
+
+      this.actionContextIntegrator = new ActionContextIntegrator(this.contextEngine);
+
+      // Start a test run
+      this.contextEngine.startTestRun({
+        name: this.opts.groupName || 'Test Run',
+        description: this.opts.groupDescription
+      });
+    }
   }
 
   async getUIContext(action?: InsightAction): Promise<WebUIContext> {
@@ -500,15 +540,52 @@ export class PageAgent<PageType extends WebPage = WebPage> {
   }
 
   async aiAction(taskPrompt: string): Promise<AITaskResult> {
-    const { output, executor } = await (vlLocateMode() === 'vlm-ui-tars'
-      ? this.taskExecutor.actionToGoal(taskPrompt)
-      : this.taskExecutor.action(taskPrompt, this.opts.aiActionContext));
+    let actionContext = this.opts.aiActionContext;
+    let stepId: string | undefined;
 
-    const metadata = this.afterTaskRunning(executor);
-    return {
-      result: output,
-      metadata
-    };
+    // If context engine is enabled, record the action and enhance the context
+    if (this.opts.useContextEngine && this.actionContextIntegrator) {
+      const result = await this.actionContextIntegrator.recordAction(
+        'aiAction',
+        taskPrompt
+      );
+      stepId = result.stepId;
+
+      // Get summaries of previous actions and add to the context
+      const actionSummaries = this.actionContextIntegrator.getActionSummaries();
+      if (actionSummaries && actionContext) {
+        // Append the action summaries to the context
+        actionContext = `${actionContext}\n\n${actionSummaries}`;
+      }
+    }
+
+    try {
+      // Execute the action
+      const { output, executor } = await (vlLocateMode() === 'vlm-ui-tars'
+        ? this.taskExecutor.actionToGoal(taskPrompt)
+        : this.taskExecutor.action(taskPrompt, actionContext));
+
+      // If context engine is enabled, mark the action as completed
+      if (this.opts.useContextEngine && this.actionContextIntegrator && stepId) {
+        await this.actionContextIntegrator.completeAction(stepId, true);
+      }
+
+      const metadata = this.afterTaskRunning(executor);
+      return {
+        result: output,
+        metadata
+      };
+    } catch (error) {
+      // If context engine is enabled, mark the action as failed
+      if (this.opts.useContextEngine && this.actionContextIntegrator && stepId) {
+        await this.actionContextIntegrator.completeAction(
+          stepId,
+          false,
+          error instanceof Error ? error.message : String(error)
+        );
+      }
+      throw error;
+    }
   }
 
   async aiQuery(demand: any): Promise<AITaskResult> {
@@ -568,7 +645,14 @@ export class PageAgent<PageType extends WebPage = WebPage> {
   }
 
   async aiAssert(assertion: string, msg?: string, opt?: AgentAssertOpt): Promise<AITaskResult> {
-    const { output, executor } = await this.taskExecutor.assert(assertion);
+    // Get the current URL
+    const currentUrl = await this.page.url();
+
+    // Create a system prompt with the current URL
+    const urlSystemPrompt = `Current URL: ${currentUrl}`;
+
+    // Call assert with the URL information included
+    const { output, executor } = await this.taskExecutor.assert(assertion, urlSystemPrompt);
     const metadata = this.afterTaskRunning(executor, true);
 
     if (output && opt?.keepRawResponse) {
@@ -590,6 +674,206 @@ export class PageAgent<PageType extends WebPage = WebPage> {
       result: output,
       metadata
     };
+  }
+
+  /**
+   * Solves captchas on the current page
+   *
+   * @param options Optional parameters for captcha solving
+   * @returns Result of the captcha solving operation
+   */
+  async aiCaptcha(options?: {
+    /** Maximum number of attempts to solve the captcha */
+    maxAttempts?: number;
+    /** Timeout in milliseconds for each attempt */
+    timeout?: number;
+    /** Custom instructions for solving specific types of captchas */
+    customInstructions?: string;
+    /** Enable deepThink for better captcha analysis */
+    deepThink?: boolean;
+  }): Promise<AITaskResult> {
+    const maxAttempts = options?.maxAttempts || 3;
+    const timeout = options?.timeout || 60000; // 1 minute default timeout
+    const useDeepThink = options?.deepThink || false;
+
+    // Get the current URL
+    const currentUrl = await this.page.url();
+
+    // Create a system prompt with the current URL
+    let urlSystemPrompt = `Current URL: ${currentUrl}
+
+You are a captcha solving assistant. Your task is to analyze the screenshot and solve any captcha present on the page.
+
+${useDeepThink ? 'IMPORTANT: Use deep thinking mode to carefully analyze the captcha. Take extra time to focus on the captcha area and analyze it in detail before taking any action.' : ''}
+
+CAPTCHA IDENTIFICATION:
+1. First, identify if there's a captcha on the page
+2. Determine if it's a text-based captcha or an image-based captcha
+
+TEXT-BASED CAPTCHA SOLVING STEPS:
+1. Carefully read and interpret the text in the captcha image
+2. If the text is distorted, try different interpretations
+3. Find the input field where the solution should be entered
+4. Enter the solution text
+5. Find and click the submit/verify button
+
+IMAGE-BASED CAPTCHA SOLVING STEPS:
+1. Identify the task (e.g., "select all images with cars")
+2. Analyze each image carefully
+3. Click on ALL images that match the criteria
+4. Continue until no more matching images remain
+5. Find and click the verify/submit button
+6. If new images appear after clicking, repeat the process
+
+RECAPTCHA SOLVING STEPS:
+1. If it's a checkbox reCAPTCHA, simply click the checkbox
+2. If it presents a challenge after clicking:
+   - For image selection challenges, follow the image-based steps above
+   - For audio challenges, describe that you can't solve them
+
+HCAPTCHA SOLVING STEPS:
+1. Identify the task in the instructions
+2. Select ALL images that match the criteria
+3. Click verify when done
+4. If new images appear, repeat the process
+
+GENERAL GUIDELINES:
+- Be thorough and methodical in your analysis
+- If you can't solve with high confidence, explain why
+- Provide detailed reasoning for your choices
+- If the captcha changes after an attempt, adapt and solve the new one
+
+IMPORTANT: Execute each step one by one, and verify the results before proceeding to the next step.`;
+
+    // Add custom instructions if provided
+    if (options?.customInstructions) {
+      urlSystemPrompt += `\n\nCUSTOM INSTRUCTIONS:\n${options.customInstructions}`;
+    }
+
+    let lastError = null;
+
+    // Try multiple attempts
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        // Set a timeout for this operation
+        const timeoutPromise = new Promise<never>((_, reject) => {
+          setTimeout(() => reject(new Error("Captcha solving timed out")), timeout);
+        });
+
+        // Call aiAction with the captcha solving prompt
+        let actionPromise;
+
+        if (useDeepThink) {
+          // If deepThink is enabled, use a detailed locate parameter
+          const detailedLocateParam = {
+            prompt: "Solve the captcha on this page. Identify if it's text or image based, then solve it accordingly. Take your time to analyze each element carefully.",
+            deepThink: true
+          };
+
+          // Create plans with deepThink enabled
+          const plans = buildPlans('Locate', detailedLocateParam);
+
+          // Use runPlans instead of action to enable deepThink
+          actionPromise = this.taskExecutor.runPlans(
+            taskTitleStr('Locate', 'Captcha with deepThink'),
+            plans
+          );
+        } else {
+          // Use regular action if deepThink is not enabled
+          actionPromise = this.taskExecutor.action(
+            "Solve the captcha on this page. Identify if it's text or image based, then solve it accordingly. Take your time to analyze each element carefully.",
+            urlSystemPrompt
+          );
+        }
+
+        // Race the action against the timeout
+        const { output, executor } = await Promise.race([
+          actionPromise,
+          timeoutPromise
+        ]);
+
+        // Get base metadata
+        const baseMetadata = this.afterTaskRunning(executor);
+
+        // Create a new metadata object with deepthink information if needed
+        const metadata: AITaskMetadata = {
+          ...baseMetadata,
+          ...(useDeepThink ? {
+            deepthink: {
+              used: true,
+              mode: 'captcha-analysis'
+            }
+          } : {})
+        };
+
+        // Check if the solution was successful by looking for success indicators
+        const captchaStillExists = await this.checkIfCaptchaStillExists();
+
+        if (!captchaStillExists) {
+          // Captcha solved successfully
+          return {
+            result: {
+              ...output,
+              success: true,
+              attempt,
+              usedDeepThink: useDeepThink
+            },
+            metadata
+          };
+        }
+
+        // If we're here, the captcha wasn't solved successfully
+        if (attempt < maxAttempts) {
+          // Wait a bit before the next attempt
+          await new Promise(resolve => setTimeout(resolve, 2000));
+
+          // Update the system prompt to indicate this is a retry
+          urlSystemPrompt += `\n\nIMPORTANT: This is attempt ${attempt + 1} of ${maxAttempts}. The previous attempt was unsuccessful. Try a different approach.`;
+        } else {
+          // Last attempt failed
+          return {
+            result: {
+              ...output,
+              success: false,
+              attempt,
+              usedDeepThink: useDeepThink,
+              error: "Failed to solve captcha after maximum attempts"
+            },
+            metadata
+          };
+        }
+      } catch (error) {
+        lastError = error;
+        if (attempt < maxAttempts) {
+          // Wait a bit before the next attempt
+          await new Promise(resolve => setTimeout(resolve, 2000));
+        }
+      }
+    }
+
+    // If we get here, all attempts failed with errors
+    throw lastError || new Error("Failed to solve captcha after maximum attempts");
+  }
+
+  /**
+   * Checks if a captcha is still present on the page
+   *
+   * @returns True if captcha is still present, false otherwise
+   */
+  private async checkIfCaptchaStillExists(): Promise<boolean> {
+    try {
+      // Use aiAction to check if captcha is still present
+      const { result } = await this.aiAction(
+        "Check if there is still a captcha visible on the page. If you see a captcha, respond with 'CAPTCHA_PRESENT'. If not, respond with 'NO_CAPTCHA'."
+      );
+
+      // Check the result for captcha presence
+      const resultStr = typeof result === 'string' ? result : JSON.stringify(result);
+      return resultStr.includes('CAPTCHA_PRESENT');
+    } catch (error) {
+      // If there's an error, assume captcha is still present to be safe
+      return true;
+    }
   }
 
   async aiWaitFor(assertion: string, opt?: AgentWaitForOpt): Promise<AITaskResult> {

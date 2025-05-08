@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import type { NodeType } from '@midscene/shared/constants';
+import type { NodeType } from '@acabai/shared/constants';
 import type { ChatCompletionMessageParam } from 'openai/resources';
 import type { DetailedLocateParam, scrollParam } from './yaml';
 
@@ -195,6 +195,7 @@ export interface InsightDump extends DumpMeta {
     element?: string;
     dataDemand?: InsightExtractParam;
     assertion?: string;
+    systemPrompt?: string;
   };
   quickAnswer?: Partial<AISingleElementResponse> | null;
   matchedElement: BaseElement[];
@@ -305,6 +306,7 @@ export type PlanningActionParamScroll = scrollParam;
 
 export interface PlanningActionParamAssert {
   assertion: string;
+  systemPrompt?: string;
 }
 
 export interface PlanningActionParamSleep {
@@ -486,7 +488,7 @@ export type ExecutionTaskInsightAssertion =
   ExecutionTask<ExecutionTaskInsightAssertionApply>;
 
 /*
-task - action (i.e. interact) 
+task - action (i.e. interact)
 */
 export type ExecutionTaskActionApply<ActionParam = any> = ExecutionTaskApply<
   'Action',

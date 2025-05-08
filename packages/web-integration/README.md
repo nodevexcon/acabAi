@@ -10,6 +10,9 @@ Web tarayıcı otomasyonu için AI destekli araçlar sunan bir JavaScript/TypeSc
 - **Puppeteer-Extra Entegrasyonu**: Stealth modu ve reklam engelleme özellikleri
 - **YAML Desteği**: Otomasyon görevlerini YAML dosyalarıyla tanımlayın
 - **Metadata Çıkarma**: AI görevlerinden detaylı metadata alın
+- **Context Engine**: Test adımlarının özetlerini saklayan ve sonraki işlemlerde kümülatif olarak kullanan bağlam motoru
+- **aiAssert URL Kontrolü**: URL doğrulama isteklerinde otomatik olarak mevcut URL'yi kontrol eder
+- **aiCaptcha**: Metin veya görüntü captcha'larını otomatik olarak çözen özellik
 
 ## Kurulum
 
@@ -117,6 +120,64 @@ async function runYaml() {
 runYaml().catch(console.error);
 ```
 
+## Yeni Özellikler
+
+### Context Engine
+
+Context Engine, test adımlarının özetlerini saklayan ve sonraki işlemlerde kümülatif olarak kullanan bir bağlam motorudur. Bu sayede AI, önceki adımların bağlamını anlayarak daha doğru ve tutarlı sonuçlar üretebilir.
+
+```javascript
+import { PuppeteerAgent, ContextEngine } from '@acabai/web';
+
+async function run() {
+  const browser = await puppeteer.launch({ headless: false });
+  const page = await browser.newPage();
+
+  // Context Engine'i oluştur
+  const contextEngine = new ContextEngine();
+
+  // Agent'ı Context Engine ile oluştur
+  const agent = new PuppeteerAgent(page, { contextEngine });
+
+  // İlk adım - bağlam oluşturulur
+  await agent.aiAction('Google.com sayfasına git');
+
+  // İkinci adım - önceki adımın bağlamını kullanır
+  await agent.aiAction('acabAI hakkında ara');
+
+  // Üçüncü adım - tüm önceki adımların bağlamını kullanır
+  await agent.aiAction('İlk sonuca tıkla');
+
+  await browser.close();
+}
+
+run().catch(console.error);
+```
+
+### aiAssert URL Kontrolü
+
+aiAssert artık URL doğrulama isteklerinde otomatik olarak mevcut URL'yi kontrol eder. URL ile ilgili bir doğrulama yapılırken, sistem otomatik olarak mevcut URL'yi alır ve doğrulama işlemine dahil eder.
+
+```javascript
+// URL kontrolü otomatik olarak yapılır
+await agent.aiAssert('Şu anki URL "https://www.acabai.com" içeriyor');
+
+// Daha karmaşık URL doğrulamaları
+await agent.aiAssert('Şu anki URL bir ürün sayfası ve ürün ID parametresi içeriyor');
+```
+
+### aiCaptcha
+
+aiCaptcha özelliği, metin veya görüntü captcha'larını otomatik olarak çözer. Sistem, captcha türünü tanımlayarak uygun doğrulama adımlarını tamamlar.
+
+```javascript
+// Captcha çözme
+await agent.aiCaptcha('Bu sayfadaki captcha'yı çöz');
+
+// Belirli bir captcha türünü çözme
+await agent.aiCaptcha('Resim captcha'sını çöz ve doğrula');
+```
+
 ## Puppeteer-Extra Özellikleri
 
 ### Stealth Modu
@@ -186,6 +247,7 @@ Metadata, aşağıdaki bilgileri içerir:
 - `aiQuery`: Sayfadan bilgi çıkarın
 - `aiAssert`: Sayfanın belirli bir durumda olduğunu doğrulayın
 - `aiWaitFor`: Belirli bir koşulun gerçekleşmesini bekleyin
+- `aiCaptcha`: Captcha'ları otomatik olarak çözün
 
 ## Lisans
 

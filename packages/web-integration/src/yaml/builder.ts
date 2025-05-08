@@ -1,15 +1,15 @@
 import type {
-  MidsceneYamlScript,
-  MidsceneYamlScriptWebEnv,
-  MidsceneYamlTask,
-} from '@midscene/core';
+  AcabaiYamlScript,
+  AcabaiYamlScriptWebEnv,
+  AcabaiYamlTask,
+} from '@acabai/core';
 import yaml from 'js-yaml';
 
 export function buildYaml(
-  env: MidsceneYamlScriptWebEnv,
-  tasks: MidsceneYamlTask[],
+  env: AcabaiYamlScriptWebEnv,
+  tasks: AcabaiYamlTask[],
 ) {
-  const result: MidsceneYamlScript = {
+  const result: AcabaiYamlScript = {
     target: env,
     tasks,
   };

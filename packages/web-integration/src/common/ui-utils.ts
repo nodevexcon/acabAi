@@ -7,7 +7,7 @@ import type {
   ExecutionTaskInsightQuery,
   ExecutionTaskPlanning,
   PlanningActionParamScroll,
-} from '@midscene/core';
+} from '@acabai/core';
 
 export function typeStr(task: ExecutionTask) {
   return task.subType ? `${task.type} / ${task.subType || ''}` : task.type;
@@ -125,8 +125,8 @@ export function paramStr(task: ExecutionTask) {
 }
 
 export const limitOpenNewTabScript = `
-if (!window.__MIDSCENE_NEW_TAB_INTERCEPTOR_INITIALIZED__) {
-  window.__MIDSCENE_NEW_TAB_INTERCEPTOR_INITIALIZED__ = true;
+if (!window.__ACABAI_NEW_TAB_INTERCEPTOR_INITIALIZED__) {
+  window.__ACABAI_NEW_TAB_INTERCEPTOR_INITIALIZED__ = true;
 
   // Intercept the window.open method (only once)
   window.open = function(url) {

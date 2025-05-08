@@ -7,9 +7,9 @@ import type {
   PlanningActionParamSleep,
   PlanningActionParamTap,
   PlanningLocateParam,
-} from '@midscene/core';
-import { getDebug } from '@midscene/shared/logger';
-import { assert } from '@midscene/shared/utils';
+} from '@acabai/core';
+import { getDebug } from '@acabai/shared/logger';
+import { assert } from '@acabai/shared/utils';
 
 const debug = getDebug('plan-builder');
 

@@ -1,33 +1,33 @@
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
-import { assert, ifInBrowser } from '@midscene/shared/utils';
+import { assert, ifInBrowser } from '@acabai/shared/utils';
 
 import type { PageAgent } from '@/common/agent';
 import type {
   FreeFn,
-  MidsceneYamlFlowItemAIAction,
-  MidsceneYamlFlowItemAIAssert,
-  MidsceneYamlFlowItemAIBoolean,
-  MidsceneYamlFlowItemAIHover,
-  MidsceneYamlFlowItemAIInput,
-  MidsceneYamlFlowItemAIKeyboardPress,
-  MidsceneYamlFlowItemAILocate,
-  MidsceneYamlFlowItemAINString,
-  MidsceneYamlFlowItemAINumber,
-  MidsceneYamlFlowItemAIQuery,
-  MidsceneYamlFlowItemAIScroll,
-  MidsceneYamlFlowItemAITap,
-  MidsceneYamlFlowItemAIWaitFor,
-  MidsceneYamlFlowItemEvaluateJavaScript,
-  MidsceneYamlFlowItemSleep,
-  MidsceneYamlScript,
-  MidsceneYamlScriptEnv,
+  AcabaiYamlFlowItemAIAction,
+  AcabaiYamlFlowItemAIAssert,
+  AcabaiYamlFlowItemAIBoolean,
+  AcabaiYamlFlowItemAIHover,
+  AcabaiYamlFlowItemAIInput,
+  AcabaiYamlFlowItemAIKeyboardPress,
+  AcabaiYamlFlowItemAILocate,
+  AcabaiYamlFlowItemAINString,
+  AcabaiYamlFlowItemAINumber,
+  AcabaiYamlFlowItemAIQuery,
+  AcabaiYamlFlowItemAIScroll,
+  AcabaiYamlFlowItemAITap,
+  AcabaiYamlFlowItemAIWaitFor,
+  AcabaiYamlFlowItemEvaluateJavaScript,
+  AcabaiYamlFlowItemSleep,
+  AcabaiYamlScript,
+  AcabaiYamlScriptEnv,
   ScriptPlayerStatusValue,
   ScriptPlayerTaskStatus,
-} from '@midscene/core';
-import { getMidsceneRunSubDir } from '@midscene/shared/common';
+} from '@acabai/core';
+import { getAcabaiRunSubDir } from '@acabai/shared/common';
 
-export class ScriptPlayer<T extends MidsceneYamlScriptEnv> {
+export class ScriptPlayer<T extends AcabaiYamlScriptEnv> {
   public currentTaskIndex?: number;
   public taskStatusList: ScriptPlayerTaskStatus[] = [];
   public status: ScriptPlayerStatusValue = 'init';
@@ -39,7 +39,7 @@ export class ScriptPlayer<T extends MidsceneYamlScriptEnv> {
   private pageAgent: PageAgent | null = null;
   public agentStatusTip?: string;
   constructor(
-    private script: MidsceneYamlScript,
+    private script: AcabaiYamlScript,
     private setupAgent: (platform: T) => Promise<{
       agent: PageAgent;
       freeFn: FreeFn[];
@@ -53,7 +53,7 @@ export class ScriptPlayer<T extends MidsceneYamlScriptEnv> {
     } else if (script.target?.output) {
       this.output = resolve(process.cwd(), script.target.output);
     } else {
-      this.output = join(getMidsceneRunSubDir('output'), `${process.pid}.json`);
+      this.output = join(getAcabaiRunSubDir('output'), `${process.pid}.json`);
     }
 
     this.taskStatusList = (script.tasks || []).map((task, taskIndex) => ({
@@ -130,10 +130,10 @@ export class ScriptPlayer<T extends MidsceneYamlScriptEnv> {
       taskStatus.currentStep = currentStep;
       const flowItem = flow[flowItemIndex];
       if (
-        (flowItem as MidsceneYamlFlowItemAIAction).aiAction ||
-        (flowItem as MidsceneYamlFlowItemAIAction).ai
+        (flowItem as AcabaiYamlFlowItemAIAction).aiAction ||
+        (flowItem as AcabaiYamlFlowItemAIAction).ai
       ) {
-        const actionTask = flowItem as MidsceneYamlFlowItemAIAction;
+        const actionTask = flowItem as AcabaiYamlFlowItemAIAction;
         const prompt = actionTask.aiAction || actionTask.ai;
         assert(prompt, 'missing prompt for ai (aiAction)');
         assert(
@@ -141,8 +141,8 @@ export class ScriptPlayer<T extends MidsceneYamlScriptEnv> {
           'prompt for aiAction must be a string',
         );
         await agent.aiAction(prompt);
-      } else if ((flowItem as MidsceneYamlFlowItemAIAssert).aiAssert) {
-        const assertTask = flowItem as MidsceneYamlFlowItemAIAssert;
+      } else if ((flowItem as AcabaiYamlFlowItemAIAssert).aiAssert) {
+        const assertTask = flowItem as AcabaiYamlFlowItemAIAssert;
         const prompt = assertTask.aiAssert;
         assert(prompt, 'missing prompt for aiAssert');
         assert(
@@ -150,8 +150,8 @@ export class ScriptPlayer<T extends MidsceneYamlScriptEnv> {
           'prompt for aiAssert must be a string',
         );
         await agent.aiAssert(prompt);
-      } else if ((flowItem as MidsceneYamlFlowItemAIQuery).aiQuery) {
-        const queryTask = flowItem as MidsceneYamlFlowItemAIQuery;
+      } else if ((flowItem as AcabaiYamlFlowItemAIQuery).aiQuery) {
+        const queryTask = flowItem as AcabaiYamlFlowItemAIQuery;
         const prompt = queryTask.aiQuery;
         assert(prompt, 'missing prompt for aiQuery');
         assert(
@@ -160,8 +160,8 @@ export class ScriptPlayer<T extends MidsceneYamlScriptEnv> {
         );
         const queryResult = await agent.aiQuery(prompt);
         this.setResult(queryTask.name, queryResult);
-      } else if ((flowItem as MidsceneYamlFlowItemAINumber).aiNumber) {
-        const numberTask = flowItem as MidsceneYamlFlowItemAINumber;
+      } else if ((flowItem as AcabaiYamlFlowItemAINumber).aiNumber) {
+        const numberTask = flowItem as AcabaiYamlFlowItemAINumber;
         const prompt = numberTask.aiNumber;
         assert(prompt, 'missing prompt for number');
         assert(
@@ -170,8 +170,8 @@ export class ScriptPlayer<T extends MidsceneYamlScriptEnv> {
         );
         const numberResult = await agent.aiNumber(prompt);
         this.setResult(numberTask.name, numberResult);
-      } else if ((flowItem as MidsceneYamlFlowItemAINString).aiString) {
-        const stringTask = flowItem as MidsceneYamlFlowItemAINString;
+      } else if ((flowItem as AcabaiYamlFlowItemAINString).aiString) {
+        const stringTask = flowItem as AcabaiYamlFlowItemAINString;
         const prompt = stringTask.aiString;
         assert(prompt, 'missing prompt for string');
         assert(
@@ -180,8 +180,8 @@ export class ScriptPlayer<T extends MidsceneYamlScriptEnv> {
         );
         const stringResult = await agent.aiString(prompt);
         this.setResult(stringTask.name, stringResult);
-      } else if ((flowItem as MidsceneYamlFlowItemAIBoolean).aiBoolean) {
-        const booleanTask = flowItem as MidsceneYamlFlowItemAIBoolean;
+      } else if ((flowItem as AcabaiYamlFlowItemAIBoolean).aiBoolean) {
+        const booleanTask = flowItem as AcabaiYamlFlowItemAIBoolean;
         const prompt = booleanTask.aiBoolean;
         assert(prompt, 'missing prompt for boolean');
         assert(
@@ -190,8 +190,8 @@ export class ScriptPlayer<T extends MidsceneYamlScriptEnv> {
         );
         const booleanResult = await agent.aiBoolean(prompt);
         this.setResult(booleanTask.name, booleanResult);
-      } else if ((flowItem as MidsceneYamlFlowItemAILocate).aiLocate) {
-        const locateTask = flowItem as MidsceneYamlFlowItemAILocate;
+      } else if ((flowItem as AcabaiYamlFlowItemAILocate).aiLocate) {
+        const locateTask = flowItem as AcabaiYamlFlowItemAILocate;
         const prompt = locateTask.aiLocate;
         assert(prompt, 'missing prompt for aiLocate');
         assert(
@@ -200,8 +200,8 @@ export class ScriptPlayer<T extends MidsceneYamlScriptEnv> {
         );
         const locateResult = await agent.aiLocate(prompt);
         this.setResult(locateTask.name, locateResult);
-      } else if ((flowItem as MidsceneYamlFlowItemAIWaitFor).aiWaitFor) {
-        const waitForTask = flowItem as MidsceneYamlFlowItemAIWaitFor;
+      } else if ((flowItem as AcabaiYamlFlowItemAIWaitFor).aiWaitFor) {
+        const waitForTask = flowItem as AcabaiYamlFlowItemAIWaitFor;
         const prompt = waitForTask.aiWaitFor;
         assert(prompt, 'missing prompt for aiWaitFor');
         assert(
@@ -210,8 +210,8 @@ export class ScriptPlayer<T extends MidsceneYamlScriptEnv> {
         );
         const timeout = waitForTask.timeout;
         await agent.aiWaitFor(prompt, { timeoutMs: timeout });
-      } else if ((flowItem as MidsceneYamlFlowItemSleep).sleep) {
-        const sleepTask = flowItem as MidsceneYamlFlowItemSleep;
+      } else if ((flowItem as AcabaiYamlFlowItemSleep).sleep) {
+        const sleepTask = flowItem as AcabaiYamlFlowItemSleep;
         const ms = sleepTask.sleep;
         let msNumber = ms;
         if (typeof ms === 'string') {
@@ -222,37 +222,37 @@ export class ScriptPlayer<T extends MidsceneYamlScriptEnv> {
           `ms for sleep must be greater than 0, but got ${ms}`,
         );
         await new Promise((resolve) => setTimeout(resolve, msNumber));
-      } else if ((flowItem as MidsceneYamlFlowItemAITap).aiTap) {
-        const tapTask = flowItem as MidsceneYamlFlowItemAITap;
+      } else if ((flowItem as AcabaiYamlFlowItemAITap).aiTap) {
+        const tapTask = flowItem as AcabaiYamlFlowItemAITap;
         await agent.aiTap(tapTask.aiTap, tapTask);
-      } else if ((flowItem as MidsceneYamlFlowItemAIHover).aiHover) {
-        const hoverTask = flowItem as MidsceneYamlFlowItemAIHover;
+      } else if ((flowItem as AcabaiYamlFlowItemAIHover).aiHover) {
+        const hoverTask = flowItem as AcabaiYamlFlowItemAIHover;
         await agent.aiHover(hoverTask.aiHover, hoverTask);
-      } else if ((flowItem as MidsceneYamlFlowItemAIInput).aiInput) {
-        const inputTask = flowItem as MidsceneYamlFlowItemAIInput;
+      } else if ((flowItem as AcabaiYamlFlowItemAIInput).aiInput) {
+        const inputTask = flowItem as AcabaiYamlFlowItemAIInput;
         await agent.aiInput(inputTask.aiInput, inputTask.locate, inputTask);
       } else if (
-        (flowItem as MidsceneYamlFlowItemAIKeyboardPress).aiKeyboardPress
+        (flowItem as AcabaiYamlFlowItemAIKeyboardPress).aiKeyboardPress
       ) {
         const keyboardPressTask =
-          flowItem as MidsceneYamlFlowItemAIKeyboardPress;
+          flowItem as AcabaiYamlFlowItemAIKeyboardPress;
         await agent.aiKeyboardPress(
           keyboardPressTask.aiKeyboardPress,
           keyboardPressTask.locate,
           keyboardPressTask,
         );
       } else if (
-        typeof (flowItem as MidsceneYamlFlowItemAIScroll).aiScroll !==
+        typeof (flowItem as AcabaiYamlFlowItemAIScroll).aiScroll !==
         'undefined'
       ) {
-        const scrollTask = flowItem as MidsceneYamlFlowItemAIScroll;
+        const scrollTask = flowItem as AcabaiYamlFlowItemAIScroll;
         await agent.aiScroll(scrollTask, scrollTask.locate, scrollTask);
       } else if (
-        typeof (flowItem as MidsceneYamlFlowItemEvaluateJavaScript)
+        typeof (flowItem as AcabaiYamlFlowItemEvaluateJavaScript)
           .javascript !== 'undefined'
       ) {
         const evaluateJavaScriptTask =
-          flowItem as MidsceneYamlFlowItemEvaluateJavaScript;
+          flowItem as AcabaiYamlFlowItemEvaluateJavaScript;
 
         const result = await agent.evaluateJavaScript(
           evaluateJavaScriptTask.javascript,

@@ -4,14 +4,14 @@ import type {
   AIElementLocatorResponse,
   LocateResultElement,
   PlanningAIResponse,
-} from '@midscene/core';
-import type { vlmPlanning } from '@midscene/core/ai-model';
-import { stringifyDumpData, writeLogFile } from '@midscene/core/utils';
-import { getMidsceneRunSubDir } from '@midscene/shared/common';
-import { getAIConfigInBoolean } from '@midscene/shared/env';
-import { getRunningPkgInfo } from '@midscene/shared/fs';
-import { getDebug } from '@midscene/shared/logger';
-import { ifInBrowser } from '@midscene/shared/utils';
+} from '@acabai/core';
+import type { vlmPlanning } from '@acabai/core/ai-model';
+import { stringifyDumpData, writeLogFile } from '@acabai/core/utils';
+import { getAcabaiRunSubDir } from '@acabai/shared/common';
+import { getAIConfigInBoolean } from '@acabai/shared/env';
+import { getRunningPkgInfo } from '@acabai/shared/fs';
+import { getDebug } from '@acabai/shared/logger';
+import { ifInBrowser } from '@acabai/shared/utils';
 import { type WebUIContext, replaceIllegalPathCharsAndSpace } from './utils';
 
 const debug = getDebug('cache');
@@ -296,10 +296,10 @@ export class TaskCache {
       return undefined;
     }
     const cacheFile = join(
-      getMidsceneRunSubDir('cache'),
+      getAcabaiRunSubDir('cache'),
       `${this.cacheId}.json`,
     );
-    if (!getAIConfigInBoolean('MIDSCENE_CACHE')) {
+    if (!getAIConfigInBoolean('ACABAI_CACHE')) {
       return undefined;
     }
 

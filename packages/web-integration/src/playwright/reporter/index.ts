@@ -3,8 +3,8 @@ import {
   replaceIllegalPathCharsAndSpace,
   reportFileName,
 } from '@/common/utils';
-import type { ReportDumpWithAttributes } from '@midscene/core';
-import { writeDumpReport } from '@midscene/core/utils';
+import type { ReportDumpWithAttributes } from '@acabai/core';
+import { writeDumpReport } from '@acabai/core/utils';
 import type {
   FullConfig,
   FullResult,
@@ -80,7 +80,7 @@ function getMode(reporterType: string) {
   return reporterType;
 }
 
-class MidsceneReporter implements Reporter {
+class AcabaiReporter implements Reporter {
   mode?: 'merged' | 'separate';
 
   async onBegin(config: FullConfig, suite: Suite) {
@@ -98,7 +98,7 @@ class MidsceneReporter implements Reporter {
 
   onTestEnd(test: TestCase, result: TestResult) {
     const dumpAnnotation = test.annotations.find((annotation) => {
-      return annotation.type === 'MIDSCENE_DUMP_ANNOTATION';
+      return annotation.type === 'ACABAI_DUMP_ANNOTATION';
     });
     if (!dumpAnnotation?.description) return;
     const retry = result.retry ? `(retry #${result.retry})` : '';
@@ -118,7 +118,7 @@ class MidsceneReporter implements Reporter {
     updateReport(this.mode!, testId);
 
     test.annotations = test.annotations.filter(
-      (annotation) => annotation.type !== 'MIDSCENE_DUMP_ANNOTATION',
+      (annotation) => annotation.type !== 'ACABAI_DUMP_ANNOTATION',
     );
   }
 
@@ -129,4 +129,4 @@ class MidsceneReporter implements Reporter {
   }
 }
 
-export default MidsceneReporter;
+export default AcabaiReporter;

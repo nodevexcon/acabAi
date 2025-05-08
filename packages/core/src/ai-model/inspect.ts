@@ -18,10 +18,10 @@ import {
   MIDSCENE_USE_VLM_UI_TARS,
   getAIConfigInBoolean,
   vlLocateMode,
-} from '@midscene/shared/env';
-import { cropByRect, paddingToMatchBlockByBase64 } from '@midscene/shared/img';
-import { getDebug } from '@midscene/shared/logger';
-import { assert } from '@midscene/shared/utils';
+} from '@acabai/shared/env';
+import { cropByRect, paddingToMatchBlockByBase64 } from '@acabai/shared/img';
+import { getDebug } from '@acabai/shared/logger';
+import { assert } from '@acabai/shared/utils';
 import type {
   ChatCompletionSystemMessageParam,
   ChatCompletionUserMessageParam,
@@ -416,16 +416,23 @@ export async function AiExtractElementInfo<
 
 export async function AiAssert<
   ElementType extends BaseElement = BaseElement,
->(options: { assertion: string; context: UIContext<ElementType> }) {
-  const { assertion, context } = options;
+>(options: { assertion: string; context: UIContext<ElementType>; systemPrompt?: string }) {
+  const { assertion, context, systemPrompt: customSystemPrompt } = options;
 
   assert(assertion, 'assertion should be a string');
 
   const { screenshotBase64 } = context;
 
-  const systemPrompt = systemPromptToAssert({
+  let systemPrompt = systemPromptToAssert({
     isUITars: getAIConfigInBoolean(MIDSCENE_USE_VLM_UI_TARS),
   });
+
+  // If a custom system prompt is provided, add it to the base system prompt
+  if (customSystemPrompt) {
+    systemPrompt = `${systemPrompt}
+
+${customSystemPrompt}`;
+  }
 
   const msgs: AIArgs = [
     { role: 'system', content: systemPrompt },

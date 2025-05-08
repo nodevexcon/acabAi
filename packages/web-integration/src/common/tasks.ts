@@ -27,20 +27,20 @@ import {
   type PlanningActionParamTap,
   type PlanningActionParamWaitFor,
   plan,
-} from '@midscene/core';
+} from '@acabai/core';
 import {
   type ChatCompletionMessageParam,
   vlmPlanning,
-} from '@midscene/core/ai-model';
-import { sleep } from '@midscene/core/utils';
+} from '@acabai/core/ai-model';
+import { sleep } from '@acabai/core/utils';
 
-import { UITarsModelVersion } from '@midscene/shared/env';
-import { uiTarsModelVersion } from '@midscene/shared/env';
-import { vlLocateMode } from '@midscene/shared/env';
-import type { ElementInfo } from '@midscene/shared/extractor';
-import { imageInfo, resizeImgBase64 } from '@midscene/shared/img';
-import { getDebug } from '@midscene/shared/logger';
-import { assert } from '@midscene/shared/utils';
+import { UITarsModelVersion } from '@acabai/shared/env';
+import { uiTarsModelVersion } from '@acabai/shared/env';
+import { vlLocateMode } from '@acabai/shared/env';
+import type { ElementInfo } from '@acabai/shared/extractor';
+import { imageInfo, resizeImgBase64 } from '@acabai/shared/img';
+import { getDebug } from '@acabai/shared/logger';
+import { assert } from '@acabai/shared/utils';
 import type { WebElementInfo } from '../web-element';
 import { TaskCache } from './task-cache';
 import { getKeyCommands, taskTitleStr } from './ui-utils';
@@ -266,30 +266,37 @@ export class PageTaskExecutor {
               insightDump = dump;
             };
             this.insight.onceDumpUpdatedFn = dumpCollector;
-            const assertion = await this.insight.assert(
-              assertPlan.param.assertion,
+
+            // Get the assertion and systemPrompt from the plan parameters
+            const assertion = assertPlan.param.assertion;
+            const systemPrompt = assertPlan.param.systemPrompt;
+
+            // Call insight.assert with both parameters
+            const assertionResult = await this.insight.assert(
+              assertion,
+              systemPrompt
             );
 
-            if (!assertion.pass) {
+            if (!assertionResult.pass) {
               if (plan.type === 'Assert') {
-                task.output = assertion;
+                task.output = assertionResult;
                 task.log = {
                   dump: insightDump,
                 };
                 throw new Error(
-                  assertion.thought || 'Assertion failed without reason',
+                  assertionResult.thought || 'Assertion failed without reason',
                 );
               }
 
-              task.error = assertion.thought;
+              task.error = assertionResult.thought;
             }
 
             return {
-              output: assertion,
+              output: assertionResult,
               log: {
                 dump: insightDump,
               },
-              usage: assertion.usage,
+              usage: assertionResult.usage,
             };
           },
         };
@@ -1073,6 +1080,7 @@ export class PageTaskExecutor {
 
   async assert(
     assertion: string,
+    systemPrompt?: string,
   ): Promise<ExecutionResult<InsightAssertionResponse>> {
     const description = `assert: ${assertion}`;
     const taskExecutor = new Executor(taskTitleStr('Assert', description), {
@@ -1082,6 +1090,7 @@ export class PageTaskExecutor {
       type: 'Assert',
       param: {
         assertion,
+        systemPrompt, // Add the system prompt to the assertion parameters
       },
       locate: null,
     };
@@ -1170,6 +1179,7 @@ export class PageTaskExecutor {
         type: 'AssertWithoutThrow',
         param: {
           assertion,
+          systemPrompt: `Current URL: ${await this.page.url()}`
         },
         locate: null,
       };

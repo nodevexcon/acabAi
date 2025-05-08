@@ -1,6 +1,6 @@
-import type { ElementTreeNode } from '@midscene/core';
-import type { PageType, Point, Size } from '@midscene/core';
-import type { ElementInfo } from '@midscene/shared/extractor';
+import type { ElementTreeNode } from '@acabai/core';
+import type { PageType, Point, Size } from '@acabai/core';
+import type { ElementInfo } from '@acabai/shared/extractor';
 import type { KeyInput } from 'puppeteer';
 import type ChromeExtensionProxyPage from '../chrome-extension/page';
 import type { AbstractPage } from '../page';

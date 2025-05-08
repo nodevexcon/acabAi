@@ -19,7 +19,7 @@ import {
   getRect,
   getTopDocument,
   logger,
-  midsceneGenerateHash,
+  acabaiGenerateHash,
   setDataForNode,
   setDebugMode,
   visibleRect,
@@ -76,7 +76,7 @@ function collectElementInfo(
     const attributes = getNodeAttributes(node, currentWindow);
     let valueContent =
       attributes.value || attributes.placeholder || node.textContent || '';
-    const nodeHashId = midsceneGenerateHash(node, valueContent, rect);
+    const nodeHashId = acabaiGenerateHash(node, valueContent, rect);
     const selector = setDataForNode(node, nodeHashId, false, currentWindow);
     const tagName = (node as HTMLElement).tagName.toLowerCase();
     if ((node as HTMLElement).tagName.toLowerCase() === 'select') {
@@ -125,7 +125,7 @@ function collectElementInfo(
     const attributes = getNodeAttributes(node, currentWindow);
     const pseudo = getPseudoElementContent(node, currentWindow);
     const content = node.innerText || pseudo.before || pseudo.after || '';
-    const nodeHashId = midsceneGenerateHash(node, content, rect);
+    const nodeHashId = acabaiGenerateHash(node, content, rect);
     const selector = setDataForNode(node, nodeHashId, false, currentWindow);
     const elementInfo: WebElementInfo = {
       id: nodeHashId,
@@ -153,7 +153,7 @@ function collectElementInfo(
 
   if (isImgElement(node)) {
     const attributes = getNodeAttributes(node, currentWindow);
-    const nodeHashId = midsceneGenerateHash(node, '', rect);
+    const nodeHashId = acabaiGenerateHash(node, '', rect);
     const selector = setDataForNode(node, nodeHashId, false, currentWindow);
     const elementInfo: WebElementInfo = {
       id: nodeHashId,
@@ -194,7 +194,7 @@ function collectElementInfo(
     if (!text.trim() && attributeKeys.length === 0) {
       return null;
     }
-    const nodeHashId = midsceneGenerateHash(node, text, rect);
+    const nodeHashId = acabaiGenerateHash(node, text, rect);
     const selector = setDataForNode(node, nodeHashId, true, currentWindow);
     const elementInfo: WebElementInfo = {
       id: nodeHashId,
@@ -224,7 +224,7 @@ function collectElementInfo(
   // else, consider as a container
   if (isContainerElement(node)) {
     const attributes = getNodeAttributes(node, currentWindow);
-    const nodeHashId = midsceneGenerateHash(node, '', rect);
+    const nodeHashId = acabaiGenerateHash(node, '', rect);
     const selector = setDataForNode(node, nodeHashId, false, currentWindow);
     const elementInfo: WebElementInfo = {
       id: nodeHashId,

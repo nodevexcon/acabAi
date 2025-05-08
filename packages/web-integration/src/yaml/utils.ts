@@ -1,7 +1,7 @@
-import { assert } from '@midscene/shared/utils';
+import { assert } from '@acabai/shared/utils';
 import yaml from 'js-yaml';
 
-import type { MidsceneYamlScript } from '@midscene/core';
+import type { AcabaiYamlScript } from '@acabai/core';
 
 function interpolateEnvVars(content: string): string {
   return content.replace(/\$\{([^}]+)\}/g, (_, envVar) => {
@@ -17,9 +17,9 @@ export function parseYamlScript(
   content: string,
   filePath?: string,
   ignoreCheckingTarget?: boolean,
-): MidsceneYamlScript {
+): AcabaiYamlScript {
   const interpolatedContent = interpolateEnvVars(content);
-  const obj = yaml.load(interpolatedContent) as MidsceneYamlScript;
+  const obj = yaml.load(interpolatedContent) as AcabaiYamlScript;
   const pathTip = filePath ? `, failed to load ${filePath}` : '';
   const android =
     typeof obj.android !== 'undefined'

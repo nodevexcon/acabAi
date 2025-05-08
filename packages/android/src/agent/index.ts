@@ -1,8 +1,8 @@
-import { PageAgent, type PageAgentOpt } from '@midscene/web/agent';
+import { PageAgent, type PageAgentOpt } from '@acabai/web/agent';
 import { AndroidDevice } from '../page';
 
-import { vlLocateMode } from '@midscene/shared/env';
-import { getConnectedDevices } from '../utils';
+import { vlLocateMode } from '@acabai/shared/env';
+import { getConnectedDevices, type AdbConnectionOptions } from '../utils';
 
 import { debugPage } from '../page';
 
@@ -23,12 +23,18 @@ export class AndroidAgent extends PageAgent<AndroidDevice> {
   }
 }
 
+export interface AgentFromAdbDeviceOptions extends PageAgentOpt {
+  adbConnectionOptions?: AdbConnectionOptions;
+}
+
 export async function agentFromAdbDevice(
   deviceId?: string,
-  opts?: PageAgentOpt,
+  opts?: AgentFromAdbDeviceOptions,
 ) {
+  const adbConnectionOptions = opts?.adbConnectionOptions;
+
   if (!deviceId) {
-    const devices = await getConnectedDevices();
+    const devices = await getConnectedDevices(adbConnectionOptions);
 
     deviceId = devices[0].udid;
 
@@ -38,7 +44,7 @@ export async function agentFromAdbDevice(
     );
   }
 
-  const page = new AndroidDevice(deviceId);
+  const page = new AndroidDevice(deviceId, adbConnectionOptions);
 
   await page.connect();
 

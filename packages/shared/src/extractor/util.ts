@@ -22,9 +22,9 @@ export function logger(..._msg: any[]): void {
 
 // const nodeIndexCounter = 0;
 
-const taskIdKey = '_midscene_retrieve_task_id';
-// const nodeDataIdKey = 'data-midscene-task-';
-// const nodeIndexKey = '_midscene_retrieve_node_index';
+const taskIdKey = '_acabai_retrieve_task_id';
+// const nodeDataIdKey = 'data-acabai-task-';
+// const nodeIndexKey = '_acabai_retrieve_node_index';
 
 function selectorForValue(val: number | string): string {
   return `[${taskIdKey}='${val}']`;
@@ -441,7 +441,7 @@ export function getNodeAttributes(
   return Object.fromEntries(attributesList);
 }
 
-export function midsceneGenerateHash(
+export function acabaiGenerateHash(
   node: globalThis.Node | null,
   content: string,
   rect: any,
@@ -463,11 +463,11 @@ export function generateId(numberId: number) {
 
 export function setGenerateHashOnWindow() {
   if (typeof window !== 'undefined') {
-    (window as any).midsceneGenerateHash = midsceneGenerateHash;
+    (window as any).acabaiGenerateHash = acabaiGenerateHash;
   }
 }
 
-export function setMidsceneVisibleRectOnWindow() {
+export function setAcabaiVisibleRectOnWindow() {
   if (typeof window !== 'undefined') {
     (window as any).midsceneVisibleRect = visibleRect;
   }

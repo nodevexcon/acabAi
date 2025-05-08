@@ -2,8 +2,8 @@ import { randomUUID } from 'node:crypto';
 import type { PageAgent, PageAgentOpt } from '@/common/agent';
 import { replaceIllegalPathCharsAndSpace } from '@/common/utils';
 import { PlaywrightAgent } from '@/playwright/index';
-import type { AgentWaitForOpt } from '@midscene/core';
-import { getDebug } from '@midscene/shared/logger';
+import type { AgentWaitForOpt } from '@acabai/core';
+import { getDebug } from '@acabai/shared/logger';
 import { type TestInfo, type TestType, test } from '@playwright/test';
 import type { Page as OriginPlaywrightPage } from 'playwright';
 export type APITestType = Pick<TestType<any, any>, 'step'>;
@@ -34,7 +34,7 @@ const groupAndCaseForTest = (testInfo: TestInfo) => {
 };
 
 const midsceneAgentKeyId = '_midsceneAgentId';
-export const midsceneDumpAnnotationId = 'MIDSCENE_DUMP_ANNOTATION';
+export const midsceneDumpAnnotationId = 'ACABAI_DUMP_ANNOTATION';
 
 export const PlaywrightAiFixture = (options?: {
   forceSameTabNavigation?: boolean;
@@ -100,7 +100,7 @@ export const PlaywrightAiFixture = (options?: {
             await agent.waitForNetworkIdle(waitForNetworkIdleTimeout);
           } catch (error) {
             console.warn(
-              '[midscene:warning] Waiting for network idle has timed out, but Midscene will continue execution. Please check https://midscenejs.com/faq.html#customize-the-network-timeout for more information on customizing the network timeout',
+              '[midscene:warning] Waiting for network idle has timed out, but Midscene will continue execution. Please check https://acabai.com/faq.html#customize-the-network-timeout for more information on customizing the network timeout',
             );
           }
           try {
