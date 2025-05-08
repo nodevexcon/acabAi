@@ -5,7 +5,7 @@ import type {
   UIContext,
 } from '@acabai/core';
 import { uploadTestInfoToServer } from '@acabai/core/utils';
-import { ACABAI_REPORT_TAG_NAME, getAIConfig } from '@acabai/shared/env';
+import { MIDSCENE_REPORT_TAG_NAME, getAIConfig } from '@acabai/shared/env';
 import type { ElementInfo } from '@acabai/shared/extractor';
 import { traverseTree, treeToList } from '@acabai/shared/extractor';
 import { resizeImgBase64 } from '@acabai/shared/img';
@@ -80,7 +80,7 @@ export async function parseContextFromWebPage(
 }
 
 export function reportFileName(tag = 'web') {
-  const reportTagName = getAIConfig(ACABAI_REPORT_TAG_NAME);
+  const reportTagName = getAIConfig(MIDSCENE_REPORT_TAG_NAME);
   const dateTimeInFileName = dayjs().format('YYYY-MM-DD_HH-mm-ss');
   // ensure uniqueness at the same time
   const uniqueId = uuid().substring(0, 8);

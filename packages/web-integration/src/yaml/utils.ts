@@ -1,7 +1,7 @@
 import { assert } from '@acabai/shared/utils';
 import yaml from 'js-yaml';
 
-import type { AcabaiYamlScript } from '@acabai/core';
+import type { MidsceneYamlScript as AcabaiYamlScript } from '@acabai/core';
 
 function interpolateEnvVars(content: string): string {
   return content.replace(/\$\{([^}]+)\}/g, (_, envVar) => {

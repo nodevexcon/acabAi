@@ -25,9 +25,9 @@ export default Insight;
 export { Executor, Insight, getVersion };
 
 export type {
-  AcabaiYamlScript,
-  AcabaiYamlTask,
-  AcabaiYamlFlowItem,
+  AcabaiYamlScript as MidsceneYamlScript,
+  AcabaiYamlTask as MidsceneYamlTask,
+  AcabaiYamlFlowItem as MidsceneYamlFlowItem,
 } from './yaml';
 
 // Export context engine types

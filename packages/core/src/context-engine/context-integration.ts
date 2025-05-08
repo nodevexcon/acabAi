@@ -44,16 +44,19 @@ export class ActionContextIntegrator {
    * @param stepId The ID of the step to complete
    * @param success Whether the action was successful
    * @param error Error message if the action failed
+   * @param actionResult The result data from the action
    */
   async completeAction(
     stepId: string,
     success: boolean,
-    error?: string
+    error?: string,
+    actionResult?: any
   ): Promise<void> {
     await this.contextEngine.completeStep(
       stepId,
       success ? 'success' : 'failure',
-      error
+      error,
+      actionResult
     );
   }
 
@@ -86,7 +89,7 @@ export class ActionContextIntegrator {
 
       try {
         const result = await fn();
-        await this.completeAction(stepId, true);
+        await this.completeAction(stepId, true, undefined, result);
         resolve(result);
       } catch (error) {
         await this.completeAction(

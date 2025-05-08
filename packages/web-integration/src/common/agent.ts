@@ -565,16 +565,18 @@ export class PageAgent<PageType extends WebPage = WebPage> {
         ? this.taskExecutor.actionToGoal(taskPrompt)
         : this.taskExecutor.action(taskPrompt, actionContext));
 
-      // If context engine is enabled, mark the action as completed
-      if (this.opts.useContextEngine && this.actionContextIntegrator && stepId) {
-        await this.actionContextIntegrator.completeAction(stepId, true);
-      }
-
       const metadata = this.afterTaskRunning(executor);
-      return {
+      const result = {
         result: output,
         metadata
       };
+
+      // If context engine is enabled, mark the action as completed and pass the result
+      if (this.opts.useContextEngine && this.actionContextIntegrator && stepId) {
+        await this.actionContextIntegrator.completeAction(stepId, true, undefined, output);
+      }
+
+      return result;
     } catch (error) {
       // If context engine is enabled, mark the action as failed
       if (this.opts.useContextEngine && this.actionContextIntegrator && stepId) {

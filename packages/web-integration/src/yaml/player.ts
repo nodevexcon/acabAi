@@ -5,27 +5,27 @@ import { assert, ifInBrowser } from '@acabai/shared/utils';
 import type { PageAgent } from '@/common/agent';
 import type {
   FreeFn,
-  AcabaiYamlFlowItemAIAction,
-  AcabaiYamlFlowItemAIAssert,
-  AcabaiYamlFlowItemAIBoolean,
-  AcabaiYamlFlowItemAIHover,
-  AcabaiYamlFlowItemAIInput,
-  AcabaiYamlFlowItemAIKeyboardPress,
-  AcabaiYamlFlowItemAILocate,
-  AcabaiYamlFlowItemAINString,
-  AcabaiYamlFlowItemAINumber,
-  AcabaiYamlFlowItemAIQuery,
-  AcabaiYamlFlowItemAIScroll,
-  AcabaiYamlFlowItemAITap,
-  AcabaiYamlFlowItemAIWaitFor,
-  AcabaiYamlFlowItemEvaluateJavaScript,
-  AcabaiYamlFlowItemSleep,
-  AcabaiYamlScript,
-  AcabaiYamlScriptEnv,
+  MidsceneYamlFlowItemAIAction as AcabaiYamlFlowItemAIAction,
+  MidsceneYamlFlowItemAIAssert as AcabaiYamlFlowItemAIAssert,
+  MidsceneYamlFlowItemAIBoolean as AcabaiYamlFlowItemAIBoolean,
+  MidsceneYamlFlowItemAIHover as AcabaiYamlFlowItemAIHover,
+  MidsceneYamlFlowItemAIInput as AcabaiYamlFlowItemAIInput,
+  MidsceneYamlFlowItemAIKeyboardPress as AcabaiYamlFlowItemAIKeyboardPress,
+  MidsceneYamlFlowItemAILocate as AcabaiYamlFlowItemAILocate,
+  MidsceneYamlFlowItemAINString as AcabaiYamlFlowItemAINString,
+  MidsceneYamlFlowItemAINumber as AcabaiYamlFlowItemAINumber,
+  MidsceneYamlFlowItemAIQuery as AcabaiYamlFlowItemAIQuery,
+  MidsceneYamlFlowItemAIScroll as AcabaiYamlFlowItemAIScroll,
+  MidsceneYamlFlowItemAITap as AcabaiYamlFlowItemAITap,
+  MidsceneYamlFlowItemAIWaitFor as AcabaiYamlFlowItemAIWaitFor,
+  MidsceneYamlFlowItemEvaluateJavaScript as AcabaiYamlFlowItemEvaluateJavaScript,
+  MidsceneYamlFlowItemSleep as AcabaiYamlFlowItemSleep,
+  MidsceneYamlScript as AcabaiYamlScript,
+  MidsceneYamlScriptEnv as AcabaiYamlScriptEnv,
   ScriptPlayerStatusValue,
   ScriptPlayerTaskStatus,
 } from '@acabai/core';
-import { getAcabaiRunSubDir } from '@acabai/shared/common';
+import { getMidsceneRunSubDir } from '@acabai/shared/common';
 
 export class ScriptPlayer<T extends AcabaiYamlScriptEnv> {
   public currentTaskIndex?: number;
@@ -53,10 +53,10 @@ export class ScriptPlayer<T extends AcabaiYamlScriptEnv> {
     } else if (script.target?.output) {
       this.output = resolve(process.cwd(), script.target.output);
     } else {
-      this.output = join(getAcabaiRunSubDir('output'), `${process.pid}.json`);
+      this.output = join(getMidsceneRunSubDir('output'), `${process.pid}.json`);
     }
 
-    this.taskStatusList = (script.tasks || []).map((task, taskIndex) => ({
+    this.taskStatusList = (script.tasks || []).map((task: any, taskIndex: number) => ({
       ...task,
       index: taskIndex,
       status: 'init',

@@ -1,7 +1,7 @@
 {
   "name": "@acabai/web",
   "description": "Web tarayıcı otomasyonu için AI destekli araçlar sunan bir JavaScript/TypeScript kütüphanesi.",
-  "version": "1.4.0",
+  "version": "1.4.4",
   "repository": "https://github.com/acabAI/web",
   "homepage": "https://acabai.com/",
   "jsnext:source": "./src/index.ts",
@@ -158,8 +158,8 @@
     "bin"
   ],
   "dependencies": {
-    "@acabai/core": "^1.0.1",
-    "@acabai/shared": "^1.0.1",
+    "@acabai/core": "^1.0.3",
+    "@acabai/shared": "^1.0.5",
     "@xmldom/xmldom": "0.8.10",
     "cors": "2.8.5",
     "dayjs": "1.11.11",

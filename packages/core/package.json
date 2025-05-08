@@ -1,7 +1,7 @@
 {
   "name": "@acabai/core",
   "description": "Automate browser actions, extract data, and perform assertions using AI. It offers JavaScript SDK, Chrome extension, and support for scripting in YAML.",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "repository": "https://github.com/acabAI/web",
   "homepage": "https://acabai.com/",
   "jsnext:source": "./src/index.ts",

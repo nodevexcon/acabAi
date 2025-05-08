@@ -7,7 +7,7 @@ export interface ContextEngineOptions {
    * @default 10
    */
   maxSteps?: number;
-  
+
   /**
    * Whether to use AI for generating summaries
    * @default true
@@ -23,7 +23,7 @@ export interface CreateTestRunOptions {
    * Name of the test run
    */
   name: string;
-  
+
   /**
    * Description of the test run
    */
@@ -38,12 +38,12 @@ export interface CreateTestStepOptions {
    * The action performed (e.g., 'click', 'input', 'assert')
    */
   action: string;
-  
+
   /**
    * Description of the step
    */
   description: string;
-  
+
   /**
    * Additional metadata for the step
    */
@@ -63,37 +63,42 @@ export interface TestStepContext {
    * Unique ID of the step
    */
   id: string;
-  
+
   /**
    * The action performed
    */
   action: string;
-  
+
   /**
    * Description of the step
    */
   description: string;
-  
+
   /**
    * Result of the step
    */
   result: TestStepStatus;
-  
+
   /**
    * Error message if the step failed
    */
   error?: string;
-  
+
   /**
    * AI-generated summary of the step
    */
   summary?: string;
-  
+
   /**
    * Additional metadata for the step
    */
   metadata?: Record<string, any>;
-  
+
+  /**
+   * The actual result of the action (output from aiAction)
+   */
+  actionResult?: any;
+
   /**
    * Timestamp when the step was created
    */
@@ -108,37 +113,37 @@ export interface TestRunContext {
    * Unique ID of the test run
    */
   id: string;
-  
+
   /**
    * Name of the test run
    */
   name: string;
-  
+
   /**
    * Description of the test run
    */
   description?: string;
-  
+
   /**
    * Steps in the test run
    */
   steps: TestStepContext[];
-  
+
   /**
    * Result of the test run
    */
   result: TestStepStatus;
-  
+
   /**
    * AI-generated summary of the test run
    */
   summary?: string;
-  
+
   /**
    * Timestamp when the test run was created
    */
   timestamp: number;
-  
+
   /**
    * Timestamp when the test run was completed
    */

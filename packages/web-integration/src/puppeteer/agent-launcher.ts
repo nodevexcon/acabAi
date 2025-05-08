@@ -3,7 +3,7 @@ import { getDebug } from '@acabai/shared/logger';
 import { assert } from '@acabai/shared/utils';
 
 import { PuppeteerAgent, type PuppeteerAgentOptions } from '@/puppeteer/index';
-import type { AcabaiYamlScriptWebEnv } from '@acabai/core';
+import type { MidsceneYamlScriptWebEnv } from '@acabai/core';
 import { DEFAULT_WAIT_FOR_NETWORK_IDLE_TIMEOUT } from '@acabai/shared/constants';
 
 // Import standard puppeteer as a fallback
@@ -41,7 +41,7 @@ interface FreeFn {
 const launcherDebug = getDebug('puppeteer:launcher');
 
 export async function launchPuppeteerPage(
-  target: AcabaiYamlScriptWebEnv,
+  target: MidsceneYamlScriptWebEnv,
   preference?: {
     headed?: boolean;
     keepWindow?: boolean;
@@ -244,7 +244,7 @@ export async function launchPuppeteerPage(
 }
 
 export async function puppeteerAgentForTarget(
-  target: AcabaiYamlScriptWebEnv,
+  target: MidsceneYamlScriptWebEnv,
   preference?: {
     headed?: boolean;
     keepWindow?: boolean;

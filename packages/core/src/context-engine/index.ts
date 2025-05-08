@@ -123,8 +123,19 @@ export class ContextEngine {
 
   /**
    * Complete a step in the current test run
+   *
+   * @param stepId The ID of the step to complete
+   * @param result The result status of the step
+   * @param error Optional error message if the step failed
+   * @param actionResult Optional result data from the action
+   * @returns The updated step or null if not found
    */
-  async completeStep(stepId: string, result: TestStepStatus, error?: string): Promise<TestStepContext | null> {
+  async completeStep(
+    stepId: string,
+    result: TestStepStatus,
+    error?: string,
+    actionResult?: any
+  ): Promise<TestStepContext | null> {
     if (!this.currentTestRun) {
       return null;
     }
@@ -139,6 +150,9 @@ export class ContextEngine {
     step.result = result;
     if (error) {
       step.error = error;
+    }
+    if (actionResult !== undefined) {
+      step.actionResult = actionResult;
     }
 
     // Generate a summary for the step

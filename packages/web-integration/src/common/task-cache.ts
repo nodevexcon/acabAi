@@ -7,7 +7,7 @@ import type {
 } from '@acabai/core';
 import type { vlmPlanning } from '@acabai/core/ai-model';
 import { stringifyDumpData, writeLogFile } from '@acabai/core/utils';
-import { getAcabaiRunSubDir } from '@acabai/shared/common';
+import { getMidsceneRunSubDir } from '@acabai/shared/common';
 import { getAIConfigInBoolean } from '@acabai/shared/env';
 import { getRunningPkgInfo } from '@acabai/shared/fs';
 import { getDebug } from '@acabai/shared/logger';
@@ -296,10 +296,10 @@ export class TaskCache {
       return undefined;
     }
     const cacheFile = join(
-      getAcabaiRunSubDir('cache'),
+      getMidsceneRunSubDir('cache'),
       `${this.cacheId}.json`,
     );
-    if (!getAIConfigInBoolean('ACABAI_CACHE')) {
+    if (!getAIConfigInBoolean('MIDSCENE_CACHE')) {
       return undefined;
     }
 

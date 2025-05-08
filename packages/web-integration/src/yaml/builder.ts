@@ -1,7 +1,7 @@
 import type {
-  AcabaiYamlScript,
-  AcabaiYamlScriptWebEnv,
-  AcabaiYamlTask,
+  MidsceneYamlScript as AcabaiYamlScript,
+  MidsceneYamlScriptWebEnv as AcabaiYamlScriptWebEnv,
+  MidsceneYamlTask as AcabaiYamlTask,
 } from '@acabai/core';
 import yaml from 'js-yaml';
 
